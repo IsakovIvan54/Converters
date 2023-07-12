@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 
 # Define the range of data
 min_data = 0
-max_data = 100
+max_data = 200
 
 # Initialize Pygame mixer for sound playback
 pygame.mixer.init()
