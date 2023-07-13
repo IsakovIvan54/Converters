@@ -3,12 +3,16 @@ import time
 import os
 import tkinter as tk
 from tkinter import messagebox
+import pygame
+
+
 dateString = 'ET-Q300H-15VP150R23'
 # dateString = time.strftime("%Y-%m-%d_%H%M")
 filepath = "./" + dateString + ".csv"
 
 rm = pyvisa.ResourceManager()
 
+pygame.mixer.init()
 print(rm.list_resources())
 
 rm = pyvisa.ResourceManager()
@@ -31,7 +35,6 @@ RIG_DL3031A.write(':SOUR:CURR:RANG 60')
 
 
 # Настройка осциллографа
-
 RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
 RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
 RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
@@ -39,9 +42,6 @@ RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
 RIG_MSO8104.write(':CHAN1:BWL 20M')
 RIG_MSO8104.write(':CHAN1:SCAL 0.1')
 RIG_MSO8104.write(':TIM:SCAL 0.000002')
-
-
-
 
 
 def run_TEST(INVOLT, OUTCURR):
@@ -115,13 +115,18 @@ def show_devices():
 
 def run_script():
 
-
-
-
     VolInMin = int(InPutV1.get())
     VolInNom = int(InPutV2.get())
     VolInMax = int(InPutV3.get())
     IoutNom = float(OutCurr.get())
+
+    accur_output_voltage = float(АcOutVolt.get())
+    nominal_output_voltage = float(NomOutVolt.get())
+    max_line_reg = float(MaxLineReg.get())
+    max_load_reg = float(MaxLoadReg.get())
+    # nominal_kpd = float(NominalKpd.get())
+    max_riple_abs = float(MaxRipple.get())
+    max_riple_per = float(MaxRipple.get())
 
     valueMin = run_TEST(VolInMin, IoutNom)
     valueNom = run_TEST(VolInNom, IoutNom)
@@ -148,12 +153,40 @@ def run_script():
     output_text4.set('КПД [%]: ' + str(KPDNom)),
     output_text5.set('Пульсации  [мВ p-p]: ' + str(RiplePP))
 
+    if (nominal_output_voltage - nominal_output_voltage*accur_output_voltage/100) <= VoutLoadNom <= (nominal_output_voltage + nominal_output_voltage*accur_output_voltage/100):
+        output_label1.config(fg="green")
+    else: 
+        output_label1.config(fg="red")
+
+    if (LineReg <= max_line_reg):
+        output_label3.config(fg="green")
+    else: 
+        output_label3.config(fg="red")
+
+    if (LoadReg <= max_load_reg):
+        output_label2.config(fg="green")
+    else: 
+        output_label2.config(fg="red")
+    if (flag_var.get() == 0):
+        if ((RipleRMS <= max_riple_abs)):
+            output_label5.config(fg="green")
+        else: 
+            output_label5.config(fg="red")
+    else:
+        if ((RipleRMS <= nominal_output_voltage*max_riple_per/100)):
+            output_label5.config(fg="green")
+        else: 
+            output_label5.config(fg="red")
+
     # Write results to a file
     with open(filepath, "a") as file:
         if os.stat(filepath).st_size == 0: #if empty file, write a nice header
             file.write("Выходное напряжение (без нагрузки) [V]; Выходное напряжение при Vin" + str(VolInMin) + " [V];" + "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + "LineReg [%]; LoadReg [%]; Пульсации [мВp-p];ПульсацииRMS [мВ];" + "КПД при Vin" + str(VolInMin) + " [V];" + "КПД при Vin" + str(VolInNom)+ " [V];" + "КПД при Vin" + str(VolInMax)+ " [V];" +"\n")
         file.write("{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax)) # log the data
     file.close()
+
+    pygame.mixer.music.load('sound.wav')
+    pygame.mixer.music.play(0)
 
     
     
@@ -163,53 +196,102 @@ def exit_window():
 
 root = tk.Tk()
 
+root.geometry('760x220')
+
 # Create GUI widgets
 # Данные с первой строки
-tk.Label(root, text='Введите минимальное входное напряжение[В]:').grid(row=0, column=0)
+tk.Label(root, text='Минимальное входное напряжение[В]:').grid(row=0, column=0)
 InPutV1 = tk.Entry(root)
 InPutV1.grid(row=0, column=1)
 
-tk.Label(root, text='Введите номинальное входное напряжение[В]:').grid(row=1, column=0)
+tk.Label(root, text='Номинальное входное напряжение[В]:').grid(row=1, column=0)
 InPutV2 = tk.Entry(root)
 InPutV2.grid(row=1, column=1)
 
-tk.Label(root, text='Введите максимальное входное напряжение[В]:').grid(row=2, column=0)
+tk.Label(root, text='Максимальное входное напряжение[В]:').grid(row=2, column=0)
 InPutV3 = tk.Entry(root)
 InPutV3.grid(row=2, column=1)
 
-tk.Label(root, text='Введите ток нагрузки[А]:').grid(row=3, column=0)
+tk.Label(root, text='Ток нагрузки[А]:').grid(row=3, column=0)
 OutCurr = tk.Entry(root)
 OutCurr.grid(row=3, column=1)
 
+tk.Label(root, text='Номинальное выходное напряжение[V]:').grid(row=4, column=0)
+NomOutVolt = tk.Entry(root)
+NomOutVolt.grid(row=4, column=1)
+
+tk.Label(root, text='Отклонение выходного напряжения[%]:').grid(row=0, column=2)
+АcOutVolt = tk.Entry(root)
+АcOutVolt.grid(row=0, column=3)
+
+tk.Label(root, text='Line regulation max[%]:').grid(row=1, column=2)
+MaxLineReg = tk.Entry(root)
+MaxLineReg.grid(row=1, column=3)
+
+tk.Label(root, text='Line regulation max[%]:').grid(row=2, column=2)
+MaxLoadReg = tk.Entry(root)
+MaxLoadReg.grid(row=2, column=3)
+
+tk.Label(root, text='Номинальный КПД[%]:').grid(row=3, column=2)
+NominalKpd = tk.Entry(root)
+NominalKpd.grid(row=3, column=3)
+
+# textRip='Максимумальные пульсации[%]:'
+
+def toggle_flag():
+    if flag_var.get() == 1:
+        tk.Label(root, text= 'Максимальные пульсации[%]:').grid(row=4, column=2)
+        MaxRippleP = tk.Entry(root)
+        MaxRippleP.grid(row=4, column=3)
+    else:
+        tk.Label(root, text= 'Максимальные пульсации[mV]:').grid(row=4, column=2)
+        MaxRippleV = tk.Entry(root)
+        MaxRippleV.grid(row=4, column=3)
+
+tk.Label(root, text= 'Максимальные пульсации[mV]:').grid(row=4, column=2)
+MaxRipple = tk.Entry(root)
+MaxRipple.grid(row=4, column=3)
+
+flag_var = tk.IntVar()
+
+checkbox = tk.Checkbutton(root, text="Flag", variable=flag_var, command=toggle_flag)
+checkbox.grid(row=4, column=4)
+
 
 run_button = tk.Button(root, text='Run', command=run_script)
-run_button.grid(row=4, column=0)
+run_button.grid(row=6, column=2)
 
 exit_button = tk.Button(root, text='Exit', command=exit_window)
-exit_button.grid(row=4, column=1)
+exit_button.grid(row=6, column=3)
 
-# show_devices_button = tk.Button(root, text="Show Devices", command=show_devices)
-# show_devices_button.grid(row=4, column=2)
 
 output_text1 = tk.StringVar()
-output_label = tk.Label(root, textvariable=output_text1)
-output_label.grid(row=5, columnspan=1)
+output_label1 = tk.Label(root, textvariable=output_text1)
+output_label1.grid(row=5, columnspan=2)
 
 output_text2 = tk.StringVar()
-output_label = tk.Label(root, textvariable=output_text2)
-output_label.grid(row=6, columnspan=1)
+output_label2 = tk.Label(root, textvariable=output_text2)
+output_label2.grid(row=6, columnspan=2)
 
 output_text3 = tk.StringVar()
-output_label = tk.Label(root, textvariable=output_text3)
-output_label.grid(row=7, columnspan=1)
+output_label3 = tk.Label(root, textvariable=output_text3)
+output_label3.grid(row=7, columnspan=2)
 
 output_text4 = tk.StringVar()
-output_label = tk.Label(root, textvariable=output_text4)
-output_label.grid(row=8, columnspan=1)
+output_label4 = tk.Label(root, textvariable=output_text4)
+output_label4.grid(row=8, columnspan=2)
 
 output_text5 = tk.StringVar()
-output_label = tk.Label(root, textvariable=output_text5)
-output_label.grid(row=9, columnspan=1)
+output_label5 = tk.Label(root, textvariable=output_text5)
+output_label5.grid(row=9, columnspan=2)
+
+#Новая вставка с постоянным текстом
+#Делаем так, чтобы надписи были всегда
+output_text1.set('Выходное напряжение [В]: ')
+output_text2.set('Load regulation [%]: ')
+output_text3.set('Line regulation [%]: ')
+output_text4.set('КПД [%]: '),
+output_text5.set('Пульсации  [мВ p-p]: ')
 
 # Start GUI event loop
 root.mainloop()
