@@ -6,7 +6,7 @@ from tkinter import messagebox
 import pygame
 
 
-dateString = 'ET-Q300H-15VP150R23'
+dateString = 'TESTS'
 # dateString = time.strftime("%Y-%m-%d_%H%M")
 filepath = "./" + dateString + ".csv"
 
@@ -19,7 +19,7 @@ rm = pyvisa.ResourceManager()
 RIG_DL3031A = rm.open_resource('USB0::0x1AB1::0x0E11::DL3D244200321::INSTR')
 AKIP = rm.open_resource('TCPIP0::192.168.0.175::HISLIP0::INSTR')
 KEITHDMM6500 = rm.open_resource('USB0::0x05E6::0x6500::04530036::INSTR')
-RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
+# RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
 
 # Настройка источника
 AKIP.write('SOUR:CURR 1.3')
@@ -34,14 +34,14 @@ RIG_DL3031A.write('SOUR:CURR:SLEW 0.5')
 RIG_DL3031A.write(':SOUR:CURR:RANG 60')
 
 
-# Настройка осциллографа
-RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
-RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
-RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
-RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
-RIG_MSO8104.write(':CHAN1:BWL 20M')
-RIG_MSO8104.write(':CHAN1:SCAL 0.1')
-RIG_MSO8104.write(':TIM:SCAL 0.000002')
+# # Настройка осциллографа
+# RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
+# RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
+# RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
+# RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
+# RIG_MSO8104.write(':CHAN1:BWL 20M')
+# RIG_MSO8104.write(':CHAN1:SCAL 0.1')
+# RIG_MSO8104.write(':TIM:SCAL 0.000002')
 
 
 def run_TEST(INVOLT, OUTCURR):
@@ -71,11 +71,11 @@ def run_TEST(INVOLT, OUTCURR):
     voltageLOADout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение  c нагрузкой
     currentLOADout = float(RIG_DL3031A.query('MEAS:CURR?')) # Выходной ток c нагрузкой
 
-    RIG_MSO8104.write(':MEAS:STAT:ITEM VRMS,CHAN1')
+    # RIG_MSO8104.write(':MEAS:STAT:ITEM VRMS,CHAN1')
 
 
-    Noise = float(RIG_MSO8104.query(':MEAS:ITEM? VRMS,CHAN1')) * 1000
-    NoisePP = float(RIG_MSO8104.query(':MEAS:ITEM? VPP,CHAN1')) * 1000
+    # Noise = float(RIG_MSO8104.query(':MEAS:ITEM? VRMS,CHAN1')) * 1000
+    # NoisePP = float(RIG_MSO8104.query(':MEAS:ITEM? VPP,CHAN1')) * 1000
 
 
     kpd = ((voltageLOADout * currentLOADout) / (currentLOAD * voltageLOAD)) * 100
@@ -84,7 +84,8 @@ def run_TEST(INVOLT, OUTCURR):
     AKIP.write(':OUTP OFF')
 
     
-
+    Noise = 12
+    NoisePP = 12
 
     print(f'Напряжение ХХ: {voltageHHout:.3f}')
     print(f'Входной ток ХХ: {currentHH:.3f} A, Входное напряжение ХХ: {voltageHH:.3f} V')
@@ -93,8 +94,8 @@ def run_TEST(INVOLT, OUTCURR):
     print(f'Напряжение под нагрузкой: {voltageLOADout:.3f} V, Ток под нагрузкой: {currentLOADout:.3f} A')
     print(f'Входной ток под нагрузкой: {currentLOAD:.3f} A, Входное напряжение под нагрузкой: {voltageLOAD:.3f} V')
     print(f'КПД: {kpd:.1f} %')
-    print(f'Пульсации Vrms: {Noise:.1f} mV')
-    print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
+    # print(f'Пульсации Vrms: {Noise:.1f} mV')
+    # print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
     return[voltageHHout, voltageLOADout, kpd, Noise, NoisePP]
 
 def show_devices():
