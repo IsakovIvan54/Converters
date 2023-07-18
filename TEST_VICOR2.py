@@ -8,8 +8,12 @@ import numpy as np
 
 
 dateString = 'TESTS'
+dateString_reg_down = 'Reg_down'
+dateString_reg_up = 'Reg_up'
 # dateString = time.strftime("%Y-%m-%d_%H%M")
 filepath = "./" + dateString + ".csv"
+filepath_reg_down = "./" + dateString_reg_down + ".csv"
+filepath_reg_up = "./" + dateString_reg_up + ".csv"
 
 rm = pyvisa.ResourceManager()
 
@@ -174,6 +178,103 @@ def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
 
     return VoltageDis
 
+def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего левого положения в правое
+    intervals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+    value = [0, 0, 0, 0, 0, 0, 0]
+
+    time.sleep(1)
+    AKIP.write('SOUR:VOLT ' + str(INVOLT))
+    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+
+    AKIP.write(':OUTP ON')
+
+    time.sleep(1)
+
+    RIG_DL3031A.write(':INP ON')
+    RIG_DL831A.write('OUTP CH1, ON')
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+
+    time.sleep(1)
+
+
+    VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+
+
+    while VoltOut <= intervals[6]*nominal_output_voltage  :
+        VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        print ('Напряжение регулировки: ' + str(VoltOut))
+        if VoltOut <= 0.1*nominal_output_voltage:
+            value[0] = VoltOut
+        elif (VoltOut > 0.1*nominal_output_voltage) & (VoltOut <= 0.2*nominal_output_voltage):
+            value[1] = VoltOut
+        elif (VoltOut > 0.2*nominal_output_voltage) & (VoltOut <= 0.3*nominal_output_voltage):
+            value[2] = VoltOut
+        elif (VoltOut > 0.3*nominal_output_voltage) & (VoltOut <= 0.4*nominal_output_voltage):
+            value[3] = VoltOut
+        elif (VoltOut > 0.4*nominal_output_voltage) & (VoltOut <= 0.5*nominal_output_voltage):
+            value[4] = VoltOut
+        elif (VoltOut > 0.5*nominal_output_voltage) & (VoltOut <= 0.6*nominal_output_voltage):
+            value[5] = VoltOut
+        elif (VoltOut > 0.6*nominal_output_voltage) & (VoltOut <= 0.7*nominal_output_voltage):
+            value[6] = VoltOut
+        
+    print(value)
+
+    RIG_DL831A.write('OUTP CH1, OFF')
+    AKIP.write(':OUTP OFF')
+    RIG_DL3031A.write(':INP OFF')
+
+    with open(filepath_reg_down, "a") as file:
+        if os.stat(filepath_reg_down).st_size == 0: #if empty file, write a nice header
+            file.write("Регулировка" + str(intervals[0]) + " От номинального [V];" + "Регулировка" + str(intervals[1]) + " От номинального [V];" + "Регулировка" + str(intervals[2]) + " От номинального [V];" + "Регулировка" + str(intervals[3]) + " От номинального [V]; "+"Регулировка" + str(intervals[4]) + " От номинального [V];"+ "Регулировка" + str(intervals[5]) + " От номинального [V];" + "Регулировка" + str(intervals[6]) + " От номинального [V];" +"\n")
+        file.write("{};{};{};{};{};{};{};\n".format(value[0], value[1], value[2], value[3], value[4], value[5], value[6])) # log the data
+    file.close()
+    return value
+    
+def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего правого положения в левое
+    intervals = [1.05, 1.1]
+    value = [0, 0]
+
+    time.sleep(1)
+    AKIP.write('SOUR:VOLT ' + str(INVOLT))
+    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+
+    AKIP.write(':OUTP ON')
+
+    time.sleep(1)
+
+    RIG_DL3031A.write(':INP ON')
+    RIG_DL831A.write('OUTP CH1, ON')
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+
+    time.sleep(1)
+
+
+    VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+
+
+    while VoltOut <= intervals[1]*nominal_output_voltage  :
+        VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        print ('Напряжение регулировки: ' + str(VoltOut))
+        if VoltOut <= 1.05*nominal_output_voltage:
+            value[0] = VoltOut
+        elif (VoltOut > 1.05*nominal_output_voltage) & (VoltOut <= 1.1*nominal_output_voltage):
+            value[1] = VoltOut
+
+        
+    print(value)
+
+    RIG_DL831A.write('OUTP CH1, OFF')
+    AKIP.write(':OUTP OFF')
+    RIG_DL3031A.write(':INP OFF')
+
+    with open(filepath_reg_up, "a") as file:
+        if os.stat(filepath_reg_up).st_size == 0: #if empty file, write a nice header
+            file.write("Регулировка" + str(intervals[0]) + " От номинального [V];" + "Регулировка" + str(intervals[1]) +"\n")
+        file.write("{};{};\n".format(value[0], value[1])) # log the data
+    file.close()
+    return value
+
 def run_script():
 
     VolInMin = int(InPutV1.get())
@@ -260,6 +361,21 @@ def run_script():
     pygame.mixer.music.load('sound.wav')
     pygame.mixer.music.play(0)
 
+def reg_Down_But():
+    VolInNom = int(InPutV2.get())
+    IoutNom = float(OutCurr.get())
+    nominal_output_voltage = float(NomOutVolt.get())
+    disable_volt = float(DisVolt.get())
+    reg_Down_list = reg_Down(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+    print('Регулировка выходного напряжения:' + str(reg_Down_list))
+
+def reg_Up_But():
+    VolInNom = int(InPutV2.get())
+    IoutNom = float(OutCurr.get())
+    nominal_output_voltage = float(NomOutVolt.get())
+    disable_volt = float(DisVolt.get())
+    reg_Up_list = reg_Up(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+    print('Регулировка выходного напряжения:' + str(reg_Up_list))
 
     
 
@@ -268,7 +384,7 @@ def exit_window():
 
 root = tk.Tk()
 
-root.geometry('1460x320')
+root.geometry('960x270')
 
 # Create GUI widgets
 # Данные с первой строки
@@ -341,8 +457,14 @@ checkbox.grid(row=4, column=4)
 run_button = tk.Button(root, text='Run', command=run_script)
 run_button.grid(row=6, column=2)
 
+reg_down_button = tk.Button(root, text='Regulation Down', command=reg_Down_But)
+reg_down_button.grid(row=6, column=3)
+
+reg_down_button = tk.Button(root, text='Regulation Up', command=reg_Up_But)
+reg_down_button.grid(row=6, column=4)
+
 exit_button = tk.Button(root, text='Exit', command=exit_window)
-exit_button.grid(row=6, column=3)
+exit_button.grid(row=6, column=5)
 
 
 output_text1 = tk.StringVar()
@@ -380,10 +502,3 @@ output_text6.set('Напряжение отключения [В]: ')
 
 # Start GUI event loop
 root.mainloop()
-
-
-
-
-
-
-
