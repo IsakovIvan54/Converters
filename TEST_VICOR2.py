@@ -57,20 +57,21 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     time.sleep(1)
     AKIP.write('SOUR:VOLT ' + str(INVOLT))
     RIG_DL3031A.write('CURR ' + str(OUTCURR))
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
 
     AKIP.write(':OUTP ON')
-
     RIG_DL831A.write('OUTP CH1, ON')
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
 
     time.sleep(1)
 
     currentHH = float(AKIP.query('MEAS:CURR?')) # Входный ток без нагрузки
     voltageHH = float(AKIP.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
 
+    time.sleep(1.7)
+
     voltageHHout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение без нагрузки
 
-    time.sleep(2)
+    time.sleep(0.2)
 
     RIG_DL3031A.write(':INP ON')
 
@@ -99,10 +100,11 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     
     Noise = 12
     NoisePP = 12
+    print('------------------------------------------------------------------------')
 
     print(f'Напряжение ХХ: {voltageHHout:.3f}')
     print(f'Входной ток ХХ: {currentHH:.3f} A, Входное напряжение ХХ: {voltageHH:.3f} V')
-    print('------------------------------------------------------------------------')
+    
 
     print(f'Напряжение под нагрузкой: {voltageLOADout:.3f} V, Ток под нагрузкой: {currentLOADout:.3f} A')
     print(f'Входной ток под нагрузкой: {currentLOAD:.3f} A, Входное напряжение под нагрузкой: {voltageLOAD:.3f} V')
@@ -145,12 +147,13 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
         RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
         time.sleep(0.1)
         voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
-        print(voltageOUT)
+        # print(voltageOUT)
         if voltageOUT <= nominal_output_voltage/2:
             break
     RIG_DL831A.write('OUTP CH1, OFF')
     RIG_DL3031A.write(':INP OFF')
     AKIP.write(':OUTP OFF')
+    print("Напряжение отключения [V]" + str(VoltageDis))
 
     return VoltageDis
 
@@ -305,8 +308,18 @@ def run_script():
     VoutLoadNom = valueNom[1]
     VoutLoadMax = valueMax[1]
 
-    LineReg = max(((VoutLoadNom - VoutLoadMin) / VoutLoadNom * 100), ((VoutLoadNom - VoutLoadMax) / VoutLoadNom * 100))
+    LineRegLow = (VoutLoadNom - VoutLoadMin) / VoutLoadNom * 100
+    LineRegHigh = (VoutLoadNom - VoutLoadMax) / VoutLoadNom * 100
+    if LineRegLow <= 0:
+        LineRegLow = -1*LineRegLow
+    if LineRegHigh <= 0:
+        LineRegHigh = -1*LineRegHigh
+
+    LineReg = max(LineRegLow, LineRegHigh)
+    
     LoadReg = (VoutLoadNom - VoutNoLoadNOM) / VoutLoadNom * 100
+    if LoadReg <= 0:
+        LoadReg = -1*LoadReg
 
     RiplePP = valueNom[4]
     RipleRMS = valueNom[3]
@@ -354,8 +367,8 @@ def run_script():
     # Write results to a file
     with open(filepath, "a") as file:
         if os.stat(filepath).st_size == 0: #if empty file, write a nice header
-            file.write("Выходное напряжение (без нагрузки) [V]; Выходное напряжение при Vin" + str(VolInMin) + " [V];" + "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + "LineReg [%]; LoadReg [%]; Пульсации [мВp-p];ПульсацииRMS [мВ];" + "КПД при Vin" + str(VolInMin) + " [V];" + "КПД при Vin" + str(VolInNom)+ " [V];" + "КПД при Vin" + str(VolInMax)+ " [V];" +"\n")
-        file.write("{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax)) # log the data
+            file.write("Выходное напряжение (без нагрузки) [V]; Выходное напряжение при Vin" + str(VolInMin) + " [V];" + "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + "LineReg [%]; LoadReg [%]; Пульсации [мВp-p];ПульсацииRMS [мВ];" + "КПД при Vin" + str(VolInMin) + " [V];" + "КПД при Vin" + str(VolInNom)+ " [V];" + "КПД при Vin" + str(VolInMax)+ " [V];" + "Напряжение отключения [V];" +"\n")
+        file.write("{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax,DisableVoltage)) # log the data
     file.close()
 
     pygame.mixer.music.load('sound.wav')
