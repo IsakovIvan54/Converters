@@ -4,6 +4,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 import pygame
+import numpy as np
 
 
 dateString = 'TESTS'
@@ -19,6 +20,7 @@ rm = pyvisa.ResourceManager()
 RIG_DL3031A = rm.open_resource('USB0::0x1AB1::0x0E11::DL3D244200321::INSTR')
 AKIP = rm.open_resource('TCPIP0::192.168.0.175::HISLIP0::INSTR')
 KEITHDMM6500 = rm.open_resource('USB0::0x05E6::0x6500::04530036::INSTR')
+RIG_DL831A = rm.open_resource('USB0::0x1AB1::0x0E11::DP8A244400389::INSTR')
 # RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
 
 # Настройка источника
@@ -33,6 +35,9 @@ RIG_DL3031A.write('INST OUT1')
 RIG_DL3031A.write('SOUR:CURR:SLEW 0.5')
 RIG_DL3031A.write(':SOUR:CURR:RANG 60')
 
+# Настройка источника для выключения 
+RIG_DL831A.write(':SOUR1:CURR 0.050')
+
 
 # # Настройка осциллографа
 # RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
@@ -44,12 +49,15 @@ RIG_DL3031A.write(':SOUR:CURR:RANG 60')
 # RIG_MSO8104.write(':TIM:SCAL 0.000002')
 
 
-def run_TEST(INVOLT, OUTCURR):
+def run_TEST(INVOLT, OUTCURR, DVolt):
     time.sleep(1)
     AKIP.write('SOUR:VOLT ' + str(INVOLT))
     RIG_DL3031A.write('CURR ' + str(OUTCURR))
 
     AKIP.write(':OUTP ON')
+
+    RIG_DL831A.write('OUTP CH1, ON')
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
 
     time.sleep(1)
 
@@ -82,6 +90,7 @@ def run_TEST(INVOLT, OUTCURR):
 
     RIG_DL3031A.write(':INP OFF')
     AKIP.write(':OUTP OFF')
+    RIG_DL831A.write('OUTP CH1, OFF')
 
     
     Noise = 12
@@ -114,6 +123,57 @@ def show_devices():
     except pyvisa.Error as e:
         messagebox.showerror("Error", f"Error accessing devices: {e}")
 
+def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
+    time.sleep(1)
+    AKIP.write('SOUR:VOLT ' + str(INVOLT))
+    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+
+    AKIP.write(':OUTP ON')
+    time.sleep(1)
+
+    RIG_DL3031A.write(':INP ON')
+    RIG_DL831A.write('OUTP CH1, ON')
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    time.sleep(1)
+
+    for VoltageDis in np.arange(DVolt,0,-0.05):
+        # time.sleep(0.8)
+        RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
+        time.sleep(0.1)
+        voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        print(voltageOUT)
+        if voltageOUT <= nominal_output_voltage/2:
+            break
+    RIG_DL831A.write('OUTP CH1, OFF')
+    RIG_DL3031A.write(':INP OFF')
+    AKIP.write(':OUTP OFF')
+
+    return VoltageDis
+
+def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
+    time.sleep(1)
+    AKIP.write('SOUR:VOLT ' + str(INVOLT))
+    # RIG_DL3031A.write('CURR ' + str(OUTCURR))
+
+    AKIP.write(':OUTP ON')
+    time.sleep(1)
+
+    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    RIG_DL831A.write('OUTP CH1, ON')
+    time.sleep(1)
+
+    for VoltageDis in np.arange(DVolt,0,-0.05):
+        RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
+        time.sleep(0.1)
+        voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        print(voltageOUT)
+        if voltageOUT <= nominal_output_voltage*0.99:
+            break
+    RIG_DL831A.write('OUTP CH1, OFF')
+    AKIP.write(':OUTP OFF')
+
+    return VoltageDis
+
 def run_script():
 
     VolInMin = int(InPutV1.get())
@@ -128,10 +188,16 @@ def run_script():
     # nominal_kpd = float(NominalKpd.get())
     max_riple_abs = float(MaxRipple.get())
     max_riple_per = float(MaxRipple.get())
+    disable_volt = float(DisVolt.get())
+    disable_volt_max = float(DisVoltMax.get())
+    
 
-    valueMin = run_TEST(VolInMin, IoutNom)
-    valueNom = run_TEST(VolInNom, IoutNom)
-    valueMax = run_TEST(VolInMax, IoutNom)
+    valueMin = run_TEST(VolInMin, IoutNom, disable_volt)
+    valueNom = run_TEST(VolInNom, IoutNom, disable_volt)
+    valueMax = run_TEST(VolInMax, IoutNom, disable_volt)
+
+    DisableVoltage = Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+    # DisableVoltageMax = Disable_Volt(VolInNom, disable_volt, nominal_output_voltage)
 
     VoutNoLoadNOM = valueNom[0]
     VoutLoadMin = valueMin[1]
@@ -153,6 +219,7 @@ def run_script():
     output_text3.set('Line regulation [%]: ' + str(LineReg))
     output_text4.set('КПД [%]: ' + str(KPDNom)),
     output_text5.set('Пульсации  [мВ p-p]: ' + str(RiplePP))
+    output_text6.set('Напряжение отключения [В]: ' + str(DisableVoltage))
 
     if (nominal_output_voltage - nominal_output_voltage*accur_output_voltage/100) <= VoutLoadNom <= (nominal_output_voltage + nominal_output_voltage*accur_output_voltage/100):
         output_label1.config(fg="green")
@@ -178,6 +245,10 @@ def run_script():
             output_label5.config(fg="green")
         else: 
             output_label5.config(fg="red")
+    if (disable_volt <= disable_volt_max):
+        output_label6.config(fg="green")
+    else: 
+        output_label6.config(fg="red")
 
     # Write results to a file
     with open(filepath, "a") as file:
@@ -189,7 +260,7 @@ def run_script():
     pygame.mixer.music.load('sound.wav')
     pygame.mixer.music.play(0)
 
-    
+
     
 
 def exit_window():
@@ -197,7 +268,7 @@ def exit_window():
 
 root = tk.Tk()
 
-root.geometry('760x220')
+root.geometry('1460x320')
 
 # Create GUI widgets
 # Данные с первой строки
@@ -237,6 +308,14 @@ tk.Label(root, text='Номинальный КПД[%]:').grid(row=3, column=2)
 NominalKpd = tk.Entry(root)
 NominalKpd.grid(row=3, column=3)
 
+tk.Label(root, text='Начальное напряжение на управляющем входе[В]:').grid(row=5, column=0)
+DisVolt = tk.Entry(root)
+DisVolt.grid(row=5, column=1)
+
+tk.Label(root, text='Максимальное управляющее напряжение[В]:').grid(row=5, column=2)
+DisVoltMax = tk.Entry(root)
+DisVoltMax.grid(row=5, column=3)
+
 # textRip='Максимумальные пульсации[%]:'
 
 def toggle_flag():
@@ -268,23 +347,27 @@ exit_button.grid(row=6, column=3)
 
 output_text1 = tk.StringVar()
 output_label1 = tk.Label(root, textvariable=output_text1)
-output_label1.grid(row=5, columnspan=2)
+output_label1.grid(row=6, columnspan=2)
 
 output_text2 = tk.StringVar()
 output_label2 = tk.Label(root, textvariable=output_text2)
-output_label2.grid(row=6, columnspan=2)
+output_label2.grid(row=7, columnspan=2)
 
 output_text3 = tk.StringVar()
 output_label3 = tk.Label(root, textvariable=output_text3)
-output_label3.grid(row=7, columnspan=2)
+output_label3.grid(row=8, columnspan=2)
 
 output_text4 = tk.StringVar()
 output_label4 = tk.Label(root, textvariable=output_text4)
-output_label4.grid(row=8, columnspan=2)
+output_label4.grid(row=9, columnspan=2)
 
 output_text5 = tk.StringVar()
 output_label5 = tk.Label(root, textvariable=output_text5)
-output_label5.grid(row=9, columnspan=2)
+output_label5.grid(row=10, columnspan=2)
+
+output_text6 = tk.StringVar()
+output_label6 = tk.Label(root, textvariable=output_text6)
+output_label6.grid(row=11, columnspan=2)
 
 #Новая вставка с постоянным текстом
 #Делаем так, чтобы надписи были всегда
@@ -293,6 +376,7 @@ output_text2.set('Load regulation [%]: ')
 output_text3.set('Line regulation [%]: ')
 output_text4.set('КПД [%]: '),
 output_text5.set('Пульсации  [мВ p-p]: ')
+output_text6.set('Напряжение отключения [В]: ')
 
 # Start GUI event loop
 root.mainloop()
