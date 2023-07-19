@@ -67,7 +67,7 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     currentHH = float(AKIP.query('MEAS:CURR?')) # Входный ток без нагрузки
     voltageHH = float(AKIP.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
 
-    time.sleep(1.7)
+    time.sleep(2)
 
     voltageHHout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение без нагрузки
 
@@ -294,6 +294,7 @@ def run_script():
     max_riple_per = float(MaxRipple.get())
     disable_volt = float(DisVolt.get())
     disable_volt_max = float(DisVoltMax.get())
+    disable_volt_min = float(DisVoltMin.get())
     
 
     valueMin = run_TEST(VolInMin, IoutNom, disable_volt)
@@ -359,7 +360,7 @@ def run_script():
             output_label5.config(fg="green")
         else: 
             output_label5.config(fg="red")
-    if (disable_volt <= disable_volt_max):
+    if (disable_volt_min <= DisableVoltage <= disable_volt_max):
         output_label6.config(fg="green")
     else: 
         output_label6.config(fg="red")
@@ -397,7 +398,7 @@ def exit_window():
 
 root = tk.Tk()
 
-root.geometry('960x270')
+root.geometry('850x280')
 
 # Create GUI widgets
 # Данные с первой строки
@@ -441,9 +442,13 @@ tk.Label(root, text='Начальное напряжение на управля
 DisVolt = tk.Entry(root)
 DisVolt.grid(row=5, column=1)
 
-tk.Label(root, text='Максимальное управляющее напряжение[В]:').grid(row=5, column=2)
+tk.Label(root, text='Минимальное управляющее напряжение[В]:').grid(row=5, column=2)
+DisVoltMin = tk.Entry(root)
+DisVoltMin.grid(row=5, column=3)
+
+tk.Label(root, text='Максимальное управляющее напряжение[В]:').grid(row=6, column=2)
 DisVoltMax = tk.Entry(root)
-DisVoltMax.grid(row=5, column=3)
+DisVoltMax.grid(row=6, column=3)
 
 # textRip='Максимумальные пульсации[%]:'
 
@@ -468,16 +473,16 @@ checkbox.grid(row=4, column=4)
 
 
 run_button = tk.Button(root, text='Run', command=run_script)
-run_button.grid(row=6, column=2)
+run_button.grid(row=7, column=2)
 
 reg_down_button = tk.Button(root, text='Regulation Down', command=reg_Down_But)
-reg_down_button.grid(row=6, column=3)
+reg_down_button.grid(row=8, column=2)
 
 reg_down_button = tk.Button(root, text='Regulation Up', command=reg_Up_But)
-reg_down_button.grid(row=6, column=4)
+reg_down_button.grid(row=9, column=2)
 
 exit_button = tk.Button(root, text='Exit', command=exit_window)
-exit_button.grid(row=6, column=5)
+exit_button.grid(row=10, column=2)
 
 
 output_text1 = tk.StringVar()
