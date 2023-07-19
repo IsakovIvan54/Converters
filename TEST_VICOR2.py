@@ -398,73 +398,75 @@ def exit_window():
 
 root = tk.Tk()
 
-root.geometry('850x280')
+# root.geometry('850x280')
 
 # Create GUI widgets
 # Данные с первой строки
-tk.Label(root, text='Минимальное входное напряжение[В]:').grid(row=0, column=0)
-InPutV1 = tk.Entry(root)
-InPutV1.grid(row=0, column=1)
 
-tk.Label(root, text='Номинальное входное напряжение[В]:').grid(row=1, column=0)
-InPutV2 = tk.Entry(root)
-InPutV2.grid(row=1, column=1)
+tk.Label(root, text='Минимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=0, column=0)
+InPutV1 = tk.Entry(root,font=("Arial", 14))
+InPutV1.grid(row=0, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Максимальное входное напряжение[В]:').grid(row=2, column=0)
-InPutV3 = tk.Entry(root)
-InPutV3.grid(row=2, column=1)
 
-tk.Label(root, text='Ток нагрузки[А]:').grid(row=3, column=0)
-OutCurr = tk.Entry(root)
-OutCurr.grid(row=3, column=1)
+tk.Label(root, text='Номинальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=1, column=0)
+InPutV2 = tk.Entry(root,font=("Arial", 14))
+InPutV2.grid(row=1, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Номинальное выходное напряжение[V]:').grid(row=4, column=0)
-NomOutVolt = tk.Entry(root)
-NomOutVolt.grid(row=4, column=1)
+tk.Label(root, text='Максимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=2, column=0)
+InPutV3 = tk.Entry(root,font=("Arial", 14))
+InPutV3.grid(row=2, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Отклонение выходного напряжения[%]:').grid(row=0, column=2)
-АcOutVolt = tk.Entry(root)
-АcOutVolt.grid(row=0, column=3)
+tk.Label(root, text='Ток нагрузки[А]:', font="Verdana 14 normal").grid(row=3, column=0)
+OutCurr = tk.Entry(root,font=("Arial", 14))
+OutCurr.grid(row=3, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Line regulation max[%]:').grid(row=1, column=2)
-MaxLineReg = tk.Entry(root)
-MaxLineReg.grid(row=1, column=3)
+tk.Label(root, text='Номинальное выходное напряжение[V]:', font="Verdana 14 normal").grid(row=4, column=0)
+NomOutVolt = tk.Entry(root,font=("Arial", 14))
+NomOutVolt.grid(row=4, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Line regulation max[%]:').grid(row=2, column=2)
-MaxLoadReg = tk.Entry(root)
-MaxLoadReg.grid(row=2, column=3)
+tk.Label(root, text='Отклонение выходного напряжения[%]:', font="Verdana 14 normal").grid(row=0, column=2)
+АcOutVolt = tk.Entry(root,font=("Arial", 14))
+АcOutVolt.grid(row=0, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Номинальный КПД[%]:').grid(row=3, column=2)
-NominalKpd = tk.Entry(root)
-NominalKpd.grid(row=3, column=3)
+tk.Label(root, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=1, column=2)
+MaxLineReg = tk.Entry(root,font=("Arial", 14))
+MaxLineReg.grid(row=1, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Начальное напряжение на управляющем входе[В]:').grid(row=5, column=0)
-DisVolt = tk.Entry(root)
-DisVolt.grid(row=5, column=1)
+tk.Label(root, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=2, column=2)
+MaxLoadReg = tk.Entry(root,font=("Arial", 14))
+MaxLoadReg.grid(row=2, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Минимальное управляющее напряжение[В]:').grid(row=5, column=2)
-DisVoltMin = tk.Entry(root)
-DisVoltMin.grid(row=5, column=3)
+tk.Label(root, text='Номинальный КПД[%]:', font="Verdana 14 normal").grid(row=3, column=2)
+NominalKpd = tk.Entry(root,font=("Arial", 14))
+NominalKpd.grid(row=3, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Максимальное управляющее напряжение[В]:').grid(row=6, column=2)
-DisVoltMax = tk.Entry(root)
-DisVoltMax.grid(row=6, column=3)
+tk.Label(root, text='Начальное напряжение на управляющем входе[В]:', font="Verdana 14 normal").grid(row=5, column=0)
+DisVolt = tk.Entry(root,font=("Arial", 14))
+DisVolt.grid(row=5, column=1,  ipadx=6, ipady=7)
+
+tk.Label(root, text='Минимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=5, column=2)
+DisVoltMin = tk.Entry(root,font=("Arial", 14))
+DisVoltMin.grid(row=5, column=3,  ipadx=6, ipady=7)
+
+tk.Label(root, text='Максимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=6, column=2)
+DisVoltMax = tk.Entry(root,font=("Arial", 14))
+DisVoltMax.grid(row=6, column=3,  ipadx=6, ipady=7)
 
 # textRip='Максимумальные пульсации[%]:'
 
 def toggle_flag():
     if flag_var.get() == 1:
-        tk.Label(root, text= 'Максимальные пульсации[%]:').grid(row=4, column=2)
-        MaxRippleP = tk.Entry(root)
-        MaxRippleP.grid(row=4, column=3)
+        tk.Label(root, text= 'Максимальные пульсации[%]:', font="Verdana 14 normal").grid(row=4, column=2)
+        MaxRippleP = tk.Entry(root,font=("Arial", 14))
+        MaxRippleP.grid(row=4, column=3,  ipadx=6, ipady=7)
     else:
-        tk.Label(root, text= 'Максимальные пульсации[mV]:').grid(row=4, column=2)
-        MaxRippleV = tk.Entry(root)
-        MaxRippleV.grid(row=4, column=3)
+        tk.Label(root, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
+        MaxRippleV = tk.Entry(root,font=("Arial", 14))
+        MaxRippleV.grid(row=4, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text= 'Максимальные пульсации[mV]:').grid(row=4, column=2)
-MaxRipple = tk.Entry(root)
-MaxRipple.grid(row=4, column=3)
+tk.Label(root, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
+MaxRipple = tk.Entry(root,font=("Arial", 14))
+MaxRipple.grid(row=4, column=3,  ipadx=6, ipady=7)
 
 flag_var = tk.IntVar()
 
@@ -473,40 +475,44 @@ checkbox.grid(row=4, column=4)
 
 
 run_button = tk.Button(root, text='Run', command=run_script)
+run_button.config(width=20, height=2)
 run_button.grid(row=7, column=2)
 
 reg_down_button = tk.Button(root, text='Regulation Down', command=reg_Down_But)
+reg_down_button.config(width=20, height=2)
 reg_down_button.grid(row=8, column=2)
 
 reg_down_button = tk.Button(root, text='Regulation Up', command=reg_Up_But)
+reg_down_button.config(width=20, height=2)
 reg_down_button.grid(row=9, column=2)
 
 exit_button = tk.Button(root, text='Exit', command=exit_window)
+exit_button.config(width=20, height=2)
 exit_button.grid(row=10, column=2)
 
 
 output_text1 = tk.StringVar()
-output_label1 = tk.Label(root, textvariable=output_text1)
+output_label1 = tk.Label(root, textvariable=output_text1, font="Verdana 14 normal")
 output_label1.grid(row=6, columnspan=2)
 
 output_text2 = tk.StringVar()
-output_label2 = tk.Label(root, textvariable=output_text2)
+output_label2 = tk.Label(root, textvariable=output_text2, font="Verdana 14 normal")
 output_label2.grid(row=7, columnspan=2)
 
 output_text3 = tk.StringVar()
-output_label3 = tk.Label(root, textvariable=output_text3)
+output_label3 = tk.Label(root, textvariable=output_text3, font="Verdana 14 normal")
 output_label3.grid(row=8, columnspan=2)
 
 output_text4 = tk.StringVar()
-output_label4 = tk.Label(root, textvariable=output_text4)
+output_label4 = tk.Label(root, textvariable=output_text4, font="Verdana 14 normal")
 output_label4.grid(row=9, columnspan=2)
 
 output_text5 = tk.StringVar()
-output_label5 = tk.Label(root, textvariable=output_text5)
+output_label5 = tk.Label(root, textvariable=output_text5, font="Verdana 14 normal")
 output_label5.grid(row=10, columnspan=2)
 
 output_text6 = tk.StringVar()
-output_label6 = tk.Label(root, textvariable=output_text6)
+output_label6 = tk.Label(root, textvariable=output_text6, font="Verdana 14 normal")
 output_label6.grid(row=11, columnspan=2)
 
 #Новая вставка с постоянным текстом

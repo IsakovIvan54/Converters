@@ -77,8 +77,6 @@ time.sleep(1)
 VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
 
 
-
-
 while VoltOut <= intervals[6]*nominal_output_voltage  :
     VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
     print ('Напряжение регулировки: ' + str(VoltOut))
@@ -97,9 +95,7 @@ while VoltOut <= intervals[6]*nominal_output_voltage  :
     elif (VoltOut > 0.6*nominal_output_voltage) & (VoltOut <= 0.7*nominal_output_voltage):
         value[6] = VoltOut
     
-
 print(value)
-
 
 RIG_DL831A.write('OUTP CH1, OFF')
 AKIP.write(':OUTP OFF')
