@@ -369,7 +369,7 @@ def run_script():
     with open(filepath, "a") as file:
         if os.stat(filepath).st_size == 0: #if empty file, write a nice header
             file.write("Выходное напряжение (без нагрузки) [V]; Выходное напряжение при Vin" + str(VolInMin) + " [V];" + "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + "LineReg [%]; LoadReg [%]; Пульсации [мВp-p];ПульсацииRMS [мВ];" + "КПД при Vin" + str(VolInMin) + " [V];" + "КПД при Vin" + str(VolInNom)+ " [V];" + "КПД при Vin" + str(VolInMax)+ " [V];" + "Напряжение отключения [V];" +"\n")
-        file.write("{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax,DisableVoltage)) # log the data
+        file.write("{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax, DisableVoltage)) # log the data
     file.close()
 
     pygame.mixer.music.load('sound.wav')
@@ -398,8 +398,6 @@ def exit_window():
 
 root = tk.Tk()
 
-# root.geometry('850x280')
-
 # Create GUI widgets
 # Данные с первой строки
 
@@ -424,6 +422,10 @@ tk.Label(root, text='Номинальное выходное напряжени�
 NomOutVolt = tk.Entry(root,font=("Arial", 14))
 NomOutVolt.grid(row=4, column=1,  ipadx=6, ipady=7)
 
+tk.Label(root, text='Начальное напряжение на управляющем входе[В]:', font="Verdana 14 normal").grid(row=5, column=0)
+DisVolt = tk.Entry(root,font=("Arial", 14))
+DisVolt.grid(row=5, column=1,  ipadx=6, ipady=7)
+
 tk.Label(root, text='Отклонение выходного напряжения[%]:', font="Verdana 14 normal").grid(row=0, column=2)
 АcOutVolt = tk.Entry(root,font=("Arial", 14))
 АcOutVolt.grid(row=0, column=3,  ipadx=6, ipady=7)
@@ -440,20 +442,6 @@ tk.Label(root, text='Номинальный КПД[%]:', font="Verdana 14 normal
 NominalKpd = tk.Entry(root,font=("Arial", 14))
 NominalKpd.grid(row=3, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Начальное напряжение на управляющем входе[В]:', font="Verdana 14 normal").grid(row=5, column=0)
-DisVolt = tk.Entry(root,font=("Arial", 14))
-DisVolt.grid(row=5, column=1,  ipadx=6, ipady=7)
-
-tk.Label(root, text='Минимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=5, column=2)
-DisVoltMin = tk.Entry(root,font=("Arial", 14))
-DisVoltMin.grid(row=5, column=3,  ipadx=6, ipady=7)
-
-tk.Label(root, text='Максимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=6, column=2)
-DisVoltMax = tk.Entry(root,font=("Arial", 14))
-DisVoltMax.grid(row=6, column=3,  ipadx=6, ipady=7)
-
-# textRip='Максимумальные пульсации[%]:'
-
 def toggle_flag():
     if flag_var.get() == 1:
         tk.Label(root, text= 'Максимальные пульсации[%]:', font="Verdana 14 normal").grid(row=4, column=2)
@@ -467,6 +455,15 @@ def toggle_flag():
 tk.Label(root, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
 MaxRipple = tk.Entry(root,font=("Arial", 14))
 MaxRipple.grid(row=4, column=3,  ipadx=6, ipady=7)
+
+
+tk.Label(root, text='Минимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=5, column=2)
+DisVoltMin = tk.Entry(root,font=("Arial", 14))
+DisVoltMin.grid(row=5, column=3,  ipadx=6, ipady=7)
+
+tk.Label(root, text='Максимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=6, column=2)
+DisVoltMax = tk.Entry(root,font=("Arial", 14))
+DisVoltMax.grid(row=6, column=3,  ipadx=6, ipady=7)
 
 flag_var = tk.IntVar()
 
