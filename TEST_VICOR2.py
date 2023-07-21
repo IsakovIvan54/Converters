@@ -301,16 +301,16 @@ def run_script():
     valueNom = run_TEST(VolInNom, IoutNom, disable_volt)
     valueMax = run_TEST(VolInMax, IoutNom, disable_volt)
 
-    DisableVoltage = Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+    DisableVoltage = round(Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage),3)
     # DisableVoltageMax = Disable_Volt(VolInNom, disable_volt, nominal_output_voltage)
 
-    VoutNoLoadNOM = valueNom[0]
-    VoutLoadMin = valueMin[1]
-    VoutLoadNom = valueNom[1]
-    VoutLoadMax = valueMax[1]
+    VoutNoLoadNOM = round(valueNom[0], 3)
+    VoutLoadMin = round(valueMin[1], 3)
+    VoutLoadNom = round(valueNom[1], 3)
+    VoutLoadMax = round(valueMax[1], 3)
 
-    LineRegLow = (VoutLoadNom - VoutLoadMin) / VoutLoadNom * 100
-    LineRegHigh = (VoutLoadNom - VoutLoadMax) / VoutLoadNom * 100
+    LineRegLow = round((VoutLoadNom - VoutLoadMin) / VoutLoadNom * 100, 3)
+    LineRegHigh = round((VoutLoadNom - VoutLoadMax) / VoutLoadNom * 100, 3)
     if LineRegLow <= 0:
         LineRegLow = -1*LineRegLow
     if LineRegHigh <= 0:
@@ -318,16 +318,16 @@ def run_script():
 
     LineReg = max(LineRegLow, LineRegHigh)
     
-    LoadReg = (VoutLoadNom - VoutNoLoadNOM) / VoutLoadNom * 100
+    LoadReg = round((VoutLoadNom - VoutNoLoadNOM) / VoutLoadNom * 100, 3)
     if LoadReg <= 0:
         LoadReg = -1*LoadReg
 
     RiplePP = valueNom[4]
     RipleRMS = valueNom[3]
 
-    KPDMin = valueMin[2]
-    KPDNom = valueNom[2]
-    KPDMax = valueMax[2]
+    KPDMin = round(valueMin[2],1)
+    KPDNom = round(valueNom[2],1)
+    KPDMax = round(valueMax[2],1)
 
     output_text1.set('Выходное напряжение [В]: ' + str(VoutLoadNom))
     output_text2.set('Load regulation [%]: ' + str(LoadReg))

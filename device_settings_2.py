@@ -4,7 +4,7 @@ import pyvisa
 # Connect to the VISA backend
 rm = pyvisa.ResourceManager()
 
-# Get a list of available devic
+# Get a list of available device
 
 def getIDN():
     devices = rm.list_resources()
@@ -17,8 +17,6 @@ def getIDN():
         name_device.append(instrument.query('*IDN?'))
     return name_device, name_visa
 
-
-
 temp_devices = getIDN()
 dropdown_data = temp_devices[1]
 device_name = temp_devices[0]
@@ -29,10 +27,6 @@ def save_changes():
     for i, dropdown in enumerate(dropdowns):
         selected_value = dropdown.get()
         print(f"Dropdown {i+1} selected value: {selected_value}")
-
-# Read dropdown data from the file
-# with open('dropdown_data.txt', 'r') as file:
-#     dropdown_data = file.read().splitlines()
 
 # Create the GUI window
 window = tk.Tk()
@@ -50,7 +44,7 @@ for i, data in enumerate(dropdown_data):
     # Set the default value for each dropdown
     default_value = tk.StringVar(window)
     default_value.set(data.split(",")[0])  # Assuming the data in the file is comma-separated
-    dropdown = tk.OptionMenu(window, default_value, *data.split(","))
+    dropdown = tk.OptionMenu(window, default_value, *dropdown_data)
     dropdown.pack()
 
     dropdowns.append(default_value)
