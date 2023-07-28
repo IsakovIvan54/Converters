@@ -5,13 +5,12 @@ import tkinter as tk
 from tkinter import messagebox
 import pygame
 import numpy as np
+from PIL import Image, ImageTk
 
 
-dateString = 'TESTS'
 dateString_reg_down = 'Reg_down'
 dateString_reg_up = 'Reg_up'
-# dateString = time.strftime("%Y-%m-%d_%H%M")
-filepath = "./" + dateString + ".csv"
+
 filepath_reg_down = "./" + dateString_reg_down + ".csv"
 filepath_reg_up = "./" + dateString_reg_up + ".csv"
 
@@ -25,7 +24,7 @@ RIG_DL3031A = rm.open_resource('USB0::0x1AB1::0x0E11::DL3D244200321::INSTR')
 AKIP = rm.open_resource('TCPIP0::192.168.0.175::HISLIP0::INSTR')
 KEITHDMM6500 = rm.open_resource('USB0::0x05E6::0x6500::04530036::INSTR')
 RIG_DL831A = rm.open_resource('USB0::0x1AB1::0x0E11::DP8A244400389::INSTR')
-# RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
+RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
 
 # Настройка источника
 AKIP.write('SOUR:CURR 1.3')
@@ -43,14 +42,14 @@ RIG_DL3031A.write(':SOUR:CURR:RANG 60')
 RIG_DL831A.write(':SOUR1:CURR 0.050')
 
 
-# # Настройка осциллографа
-# RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
-# RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
-# RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
-# RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
-# RIG_MSO8104.write(':CHAN1:BWL 20M')
-# RIG_MSO8104.write(':CHAN1:SCAL 0.1')
-# RIG_MSO8104.write(':TIM:SCAL 0.000002')
+# Настройка осциллографа
+RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
+RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
+RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
+RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
+RIG_MSO8104.write(':CHAN1:BWL 20M')
+RIG_MSO8104.write(':CHAN1:SCAL 0.1')
+RIG_MSO8104.write(':TIM:SCAL 0.000002')
 
 
 def run_TEST(INVOLT, OUTCURR, DVolt):
@@ -84,11 +83,11 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     voltageLOADout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение  c нагрузкой
     currentLOADout = float(RIG_DL3031A.query('MEAS:CURR?')) # Выходной ток c нагрузкой
 
-    # RIG_MSO8104.write(':MEAS:STAT:ITEM VRMS,CHAN1')
+    RIG_MSO8104.write(':MEAS:STAT:ITEM VRMS,CHAN1')
 
 
-    # Noise = float(RIG_MSO8104.query(':MEAS:ITEM? VRMS,CHAN1')) * 1000
-    # NoisePP = float(RIG_MSO8104.query(':MEAS:ITEM? VPP,CHAN1')) * 1000
+    Noise = float(RIG_MSO8104.query(':MEAS:ITEM? VRMS,CHAN1')) * 1000
+    NoisePP = float(RIG_MSO8104.query(':MEAS:ITEM? VPP,CHAN1')) * 1000
 
 
     kpd = ((voltageLOADout * currentLOADout) / (currentLOAD * voltageLOAD)) * 100
@@ -98,8 +97,7 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     RIG_DL831A.write('OUTP CH1, OFF')
 
     
-    Noise = 12
-    NoisePP = 12
+    
     print('------------------------------------------------------------------------')
 
     print(f'Напряжение ХХ: {voltageHHout:.3f}')
@@ -109,8 +107,8 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     print(f'Напряжение под нагрузкой: {voltageLOADout:.3f} V, Ток под нагрузкой: {currentLOADout:.3f} A')
     print(f'Входной ток под нагрузкой: {currentLOAD:.3f} A, Входное напряжение под нагрузкой: {voltageLOAD:.3f} V')
     print(f'КПД: {kpd:.1f} %')
-    # print(f'Пульсации Vrms: {Noise:.1f} mV')
-    # print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
+    print(f'Пульсации Vrms: {Noise:.1f} mV')
+    print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
     return[voltageHHout, voltageLOADout, kpd, Noise, NoisePP]
 
 def show_devices():
@@ -143,11 +141,11 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
     time.sleep(1)
 
     for VoltageDis in np.arange(DVolt,0,-0.05):
-        # time.sleep(0.8)
+        
         RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
         time.sleep(0.1)
         voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
-        # print(voltageOUT)
+        
         if voltageOUT <= nominal_output_voltage/2:
             break
     RIG_DL831A.write('OUTP CH1, OFF')
@@ -160,7 +158,7 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
 def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
     time.sleep(1)
     AKIP.write('SOUR:VOLT ' + str(INVOLT))
-    # RIG_DL3031A.write('CURR ' + str(OUTCURR))
+    
 
     AKIP.write(':OUTP ON')
     time.sleep(1)
@@ -280,6 +278,10 @@ def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с 
 
 def run_script():
 
+    dateString = NameConverter.get()
+    filepath = "./" + dateString + ".csv"
+
+
     VolInMin = int(InPutV1.get())
     VolInNom = int(InPutV2.get())
     VolInMax = int(InPutV3.get())
@@ -322,8 +324,8 @@ def run_script():
     if LoadReg <= 0:
         LoadReg = -1*LoadReg
 
-    RiplePP = valueNom[4]
-    RipleRMS = valueNom[3]
+    RiplePP = round(valueNom[4],1)
+    RipleRMS = round(valueNom[3],1)
 
     KPDMin = round(valueMin[2],1)
     KPDNom = round(valueNom[2],1)
@@ -397,120 +399,148 @@ def exit_window():
     root.destroy()
 
 root = tk.Tk()
-
+root.title('Программное обеспечение для проверки DC-DC преобразователей серии "Иртыш"')
 # Create GUI widgets
 # Данные с первой строки
+root.geometry("1550x600")
 
-tk.Label(root, text='Минимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=0, column=0)
-InPutV1 = tk.Entry(root,font=("Arial", 14))
+tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 14 normal").place(x=500, y=0)
+
+tk.Label(root, text='Наименование преобразователя:', font="Verdana 14 normal").place(x=500, y=35)
+NameConverter = tk.Entry(root,font=("Arial", 14))
+NameConverter.place(x=830, y=35)
+
+tk.Label(root, text='Версия:1.0.1', font="Verdana 8 normal").place(x=0, y=580)
+
+label_image1 = Image.open("EKBlogoNew.png")
+img=label_image1.resize((95, 70))
+label_image = ImageTk.PhotoImage(img)
+tk.Label(root, image=label_image).place(x=1445, y=520)
+
+# Create a LabelFrame for output
+input_frame = tk.LabelFrame(root, text="Параметры преобразователя", font=("Arial", 14))
+input_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
+input_frame.place(x=0, y=70)
+
+
+button_frame = tk.LabelFrame(root, text="Меню", font=("Arial", 14))
+button_frame.pack(padx=10, pady=10)
+button_frame.place(x=250, y=380)
+
+
+output_frame = tk.LabelFrame(root, text="Измеренные параметры преобразователя", font=("Arial", 14))
+output_frame.pack(padx=10, pady=10)
+output_frame.place(x=750, y=380)
+
+
+tk.Label(input_frame, text='Минимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=0, column=0)
+InPutV1 = tk.Entry(input_frame,font=("Arial", 14))
 InPutV1.grid(row=0, column=1,  ipadx=6, ipady=7)
 
-
-tk.Label(root, text='Номинальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=1, column=0)
-InPutV2 = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Номинальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=1, column=0)
+InPutV2 = tk.Entry(input_frame,font=("Arial", 14))
 InPutV2.grid(row=1, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Максимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=2, column=0)
-InPutV3 = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Максимальное входное напряжение[В]:', font="Verdana 14 normal").grid(row=2, column=0)
+InPutV3 = tk.Entry(input_frame,font=("Arial", 14))
 InPutV3.grid(row=2, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Ток нагрузки[А]:', font="Verdana 14 normal").grid(row=3, column=0)
-OutCurr = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Ток нагрузки[А]:', font="Verdana 14 normal").grid(row=3, column=0)
+OutCurr = tk.Entry(input_frame,font=("Arial", 14))
 OutCurr.grid(row=3, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Номинальное выходное напряжение[V]:', font="Verdana 14 normal").grid(row=4, column=0)
-NomOutVolt = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Номинальное выходное напряжение[V]:', font="Verdana 14 normal").grid(row=4, column=0)
+NomOutVolt = tk.Entry(input_frame,font=("Arial", 14))
 NomOutVolt.grid(row=4, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Начальное напряжение на управляющем входе[В]:', font="Verdana 14 normal").grid(row=5, column=0)
-DisVolt = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Начальное напряжение на управляющем входе[В]:', font="Verdana 14 normal").grid(row=5, column=0)
+DisVolt = tk.Entry(input_frame,font=("Arial", 14))
 DisVolt.grid(row=5, column=1,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Отклонение выходного напряжения[%]:', font="Verdana 14 normal").grid(row=0, column=2)
-АcOutVolt = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Отклонение выходного напряжения[%]:', font="Verdana 14 normal").grid(row=0, column=2)
+АcOutVolt = tk.Entry(input_frame,font=("Arial", 14))
 АcOutVolt.grid(row=0, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=1, column=2)
-MaxLineReg = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=1, column=2)
+MaxLineReg = tk.Entry(input_frame,font=("Arial", 14))
 MaxLineReg.grid(row=1, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=2, column=2)
-MaxLoadReg = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Line regulation max[%]:', font="Verdana 14 normal").grid(row=2, column=2)
+MaxLoadReg = tk.Entry(input_frame,font=("Arial", 14))
 MaxLoadReg.grid(row=2, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Номинальный КПД[%]:', font="Verdana 14 normal").grid(row=3, column=2)
-NominalKpd = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Номинальный КПД[%]:', font="Verdana 14 normal").grid(row=3, column=2)
+NominalKpd = tk.Entry(input_frame,font=("Arial", 14))
 NominalKpd.grid(row=3, column=3,  ipadx=6, ipady=7)
 
 def toggle_flag():
     if flag_var.get() == 1:
-        tk.Label(root, text= 'Максимальные пульсации[%]:', font="Verdana 14 normal").grid(row=4, column=2)
-        MaxRippleP = tk.Entry(root,font=("Arial", 14))
+        tk.Label(input_frame, text= 'Максимальные пульсации[%]:', font="Verdana 14 normal").grid(row=4, column=2)
+        MaxRippleP = tk.Entry(input_frame,font=("Arial", 14))
         MaxRippleP.grid(row=4, column=3,  ipadx=6, ipady=7)
     else:
-        tk.Label(root, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
-        MaxRippleV = tk.Entry(root,font=("Arial", 14))
+        tk.Label(input_frame, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
+        MaxRippleV = tk.Entry(input_frame,font=("Arial", 14))
         MaxRippleV.grid(row=4, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
-MaxRipple = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text= 'Максимальные пульсации[mV]:', font="Verdana 14 normal").grid(row=4, column=2)
+MaxRipple = tk.Entry(input_frame,font=("Arial", 14))
 MaxRipple.grid(row=4, column=3,  ipadx=6, ipady=7)
 
 
-tk.Label(root, text='Минимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=5, column=2)
-DisVoltMin = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Минимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=5, column=2)
+DisVoltMin = tk.Entry(input_frame,font=("Arial", 14))
 DisVoltMin.grid(row=5, column=3,  ipadx=6, ipady=7)
 
-tk.Label(root, text='Максимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=6, column=2)
-DisVoltMax = tk.Entry(root,font=("Arial", 14))
+tk.Label(input_frame, text='Максимальное управляющее напряжение[В]:', font="Verdana 14 normal").grid(row=6, column=2)
+DisVoltMax = tk.Entry(input_frame,font=("Arial", 14))
 DisVoltMax.grid(row=6, column=3,  ipadx=6, ipady=7)
 
 flag_var = tk.IntVar()
 
-checkbox = tk.Checkbutton(root, text="Flag", variable=flag_var, command=toggle_flag)
+checkbox = tk.Checkbutton(input_frame, text="[mV/%]", variable=flag_var, command=toggle_flag)
 checkbox.grid(row=4, column=4)
 
 
-run_button = tk.Button(root, text='Run', command=run_script)
+run_button = tk.Button(button_frame, text='Запуск проверки', command=run_script)
 run_button.config(width=20, height=2)
-run_button.grid(row=7, column=2)
+run_button.grid(row=0, column=1)
 
-reg_down_button = tk.Button(root, text='Regulation Down', command=reg_Down_But)
+reg_down_button = tk.Button(button_frame, text='Регулировка вверх', command=reg_Down_But)
 reg_down_button.config(width=20, height=2)
-reg_down_button.grid(row=8, column=2)
+reg_down_button.grid(row=1, column=0)
 
-reg_down_button = tk.Button(root, text='Regulation Up', command=reg_Up_But)
+reg_down_button = tk.Button(button_frame, text='Регулировка вниз', command=reg_Up_But)
 reg_down_button.config(width=20, height=2)
-reg_down_button.grid(row=9, column=2)
+reg_down_button.grid(row=0, column=0)
 
-exit_button = tk.Button(root, text='Exit', command=exit_window)
+exit_button = tk.Button(button_frame, text='Выход', command=exit_window)
 exit_button.config(width=20, height=2)
-exit_button.grid(row=10, column=2)
-
+exit_button.grid(row=1, column=1)
 
 output_text1 = tk.StringVar()
-output_label1 = tk.Label(root, textvariable=output_text1, font="Verdana 14 normal")
+output_label1 = tk.Label(output_frame, textvariable=output_text1, font="Verdana 14 normal")
 output_label1.grid(row=6, columnspan=2)
 
 output_text2 = tk.StringVar()
-output_label2 = tk.Label(root, textvariable=output_text2, font="Verdana 14 normal")
+output_label2 = tk.Label(output_frame, textvariable=output_text2, font="Verdana 14 normal")
 output_label2.grid(row=7, columnspan=2)
 
 output_text3 = tk.StringVar()
-output_label3 = tk.Label(root, textvariable=output_text3, font="Verdana 14 normal")
+output_label3 = tk.Label(output_frame, textvariable=output_text3, font="Verdana 14 normal")
 output_label3.grid(row=8, columnspan=2)
 
 output_text4 = tk.StringVar()
-output_label4 = tk.Label(root, textvariable=output_text4, font="Verdana 14 normal")
-output_label4.grid(row=9, columnspan=2)
+output_label4 = tk.Label(output_frame, textvariable=output_text4, font="Verdana 14 normal")
+output_label4.grid(row=6, column=3)
 
 output_text5 = tk.StringVar()
-output_label5 = tk.Label(root, textvariable=output_text5, font="Verdana 14 normal")
-output_label5.grid(row=10, columnspan=2)
+output_label5 = tk.Label(output_frame, textvariable=output_text5, font="Verdana 14 normal")
+output_label5.grid(row=7, column=3)
 
 output_text6 = tk.StringVar()
-output_label6 = tk.Label(root, textvariable=output_text6, font="Verdana 14 normal")
-output_label6.grid(row=11, columnspan=2)
+output_label6 = tk.Label(output_frame, textvariable=output_text6, font="Verdana 14 normal")
+output_label6.grid(row=8, column=3)
 
 #Новая вставка с постоянным текстом
 #Делаем так, чтобы надписи были всегда
