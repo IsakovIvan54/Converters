@@ -180,6 +180,10 @@ def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
     return VoltageDis
 
 def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего левого положения в правое
+
+    dateString_reg_down =  NameConverter.get() + 'Reg_down'
+    filepath_reg_down = "./" + dateString_reg_down + ".csv"
+    
     intervals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
     value = [0, 0, 0, 0, 0, 0, 0]
 
@@ -233,6 +237,10 @@ def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить �
     return value
     
 def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего правого положения в левое
+   
+    dateString_reg_up = NameConverter.get() + 'Reg_up'
+    filepath_reg_up = "./" + dateString_reg_up + ".csv"
+
     intervals = [1.05, 1.1]
     value = [0, 0]
 
@@ -280,6 +288,11 @@ def run_script():
 
     dateString = NameConverter.get()
     filepath = "./" + dateString + ".csv"
+    
+
+    
+
+    
 
 
     VolInMin = int(InPutV1.get())
