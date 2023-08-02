@@ -13,108 +13,95 @@ rm = pyvisa.ResourceManager()
 pygame.mixer.init()
 print(rm.list_resources())
 
-# 600В источник
-ITECH Ltd., IT6726G, 805033011787020025,  1.17-1.05
 
-
-# 150В источник
-ITECH Ltd., IT6513A, 805037011786920001, 0.05-0.05
-
-
-Rigol Technologies,DS1052E,DS1ET244602180,00.04.04.00.00
-
-
-RIGOL TECHNOLOGIES,DP832,DP8C244806702,00.01.19
-
-
-Prist,B7-78/3,TW00026110,03.01-17-03
-
-
-ITECH Ltd., IT8516C, 802905020787020001, 1.57
-
-
-SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
+SUPPLY600 = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
+SUPPLY150 = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
 OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0588::DS1ET244602180::INSTR') # Осциллограф 
 CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
 MULTIMETR = rm.open_resource('USB0::0x164E::0x0DB7::TW00026110::INSTR') # Мультиметр
-LOAD = rm.open_resource('ASRL6::INSTR')
+LOAD = rm.open_resource('ASRL6::INSTR') # Электронная нагрузка
 
-RIG_DL3031A = rm.open_resource('USB0::0x1AB1::0x0E11::DL3D244200321::INSTR')
-AKIP = rm.open_resource('TCPIP0::192.168.0.175::HISLIP0::INSTR')
-KEITHDMM6500 = rm.open_resource('USB0::0x05E6::0x6500::04530036::INSTR')
-RIG_DL831A = rm.open_resource('USB0::0x1AB1::0x0E11::DP8A244400389::INSTR')
-RIG_MSO8104 = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
+# LOAD = rm.open_resource('USB0::0x1AB1::0x0E11::DL3D244200321::INSTR')
+# SUPPLY600 = rm.open_resource('TCPIP0::192.168.0.175::HISLIP0::INSTR')
+# MULTIMETR = rm.open_resource('USB0::0x05E6::0x6500::04530036::INSTR')
+# CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8A244400389::INSTR')
+# OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0516::DS8A242800498')
 
-# Настройка источника
-AKIP.write('SOUR:CURR 1.3')
+# Настройка источников
+SUPPLY600.write('SOUR:CURR 10')
+SUPPLY150.write('SOUR:CURR 30')
 
 # Настройка мультиметра
-KEITHDMM6500.write(':SENSE:FUNCTION "VOLT"')
-KEITHDMM6500.write(':SENSE:VOLTAGE:RANGE:AUTO ON')
+MULTIMETR.write(':SENSE:FUNCTION "VOLT"')
+MULTIMETR.write(':SENSE:VOLTAGE:RANGE:AUTO ON')
 
-# Настройка нагрузки
-RIG_DL3031A.write('INST OUT1')
-RIG_DL3031A.write('SOUR:CURR:SLEW 0.5')
-RIG_DL3031A.write(':SOUR:CURR:RANG 60')
+# # Настройка нагрузки
+# LOAD.write('INST OUT1')
+# LOAD.write('SOUR:CURR:SLEW 0.5')
+# LOAD.write(':SOUR:CURR:RANG 60')
 
 # Настройка источника для выключения 
-RIG_DL831A.write(':SOUR1:CURR 0.050')
+CONTROL_SUPPLY.write(':SOUR3:CURR 0.050')
 
 
 # Настройка осциллографа
-RIG_MSO8104.write(':CHAN1:DISP ON')  # enable channel 1 display
-RIG_MSO8104.write(':CHAN1:COUP AC ')  # DC coupling
-RIG_MSO8104.write(':CHAN1:IMP OMEG')  # 1 MOhm input impedance
-RIG_MSO8104.write(':CHAN1:PROBE 1')  # 1x probe attenuation
-RIG_MSO8104.write(':CHAN1:BWL 20M')
-RIG_MSO8104.write(':CHAN1:SCAL 0.1')
-RIG_MSO8104.write(':TIM:SCAL 0.000002')
+OSCILLOSCOPE.write(':CHAN1:DISP ON')  # Включение первого канала 
+OSCILLOSCOPE.write(':CHAN2:DISP OFF')  # Выключение второго канала
+OSCILLOSCOPE.write(':CHAN1:BWL ON') # Включение ограничения полосы
+OSCILLOSCOPE.write(':CHAN1:COUP AC')  # Установка AC
+OSCILLOSCOPE.write(':CHAN1:OFFS 0')  # Установка смещения
+OSCILLOSCOPE.write(':CHAN1:PROB 1')  # Установка 1x ослабления
+OSCILLOSCOPE.write(':CHAN1:SCAL 0.1') # Установка 100 мВ на клетку
+OSCILLOSCOPE.write(':TIM:SCAL 0.000002') # Установка 2 мкс на клетку
+
+# Настройка нагрузки
+LOAD.write('SYST:REM')
+LOAD.write('FUNC CURR')
 
 
 def run_TEST(INVOLT, OUTCURR, DVolt):
     time.sleep(1)
-    AKIP.write('SOUR:VOLT ' + str(INVOLT))
-    RIG_DL3031A.write('CURR ' + str(OUTCURR))
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    SUPPLY600.write('SOUR:VOLT ' + str(INVOLT))
+    LOAD.write('CURR ' + str(OUTCURR))
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
 
-    AKIP.write(':OUTP ON')
-    RIG_DL831A.write('OUTP CH1, ON')
+    SUPPLY600.write(':OUTP ON')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
 
     time.sleep(1)
 
-    currentHH = float(AKIP.query('MEAS:CURR?')) # Входный ток без нагрузки
-    voltageHH = float(AKIP.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
+    currentHH = float(SUPPLY600.query('MEAS:CURR?')) # Входный ток без нагрузки
+    voltageHH = float(SUPPLY600.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
 
     time.sleep(2)
 
-    voltageHHout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение без нагрузки
+    voltageHHout = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение без нагрузки
 
     time.sleep(0.2)
 
-    RIG_DL3031A.write(':INP ON')
+    LOAD.write(':INP ON')
 
     time.sleep(2)
 
 
-    currentLOAD = float(AKIP.query('MEAS:CURR?')) # Входный ток c нагрузкой
-    voltageLOAD = float(AKIP.query('MEAS:VOLT?')) # Входное напряжение c нагрузкой
+    currentLOAD = float(SUPPLY600.query('MEAS:CURR?')) # Входный ток c нагрузкой
+    voltageLOAD = float(SUPPLY600.query('MEAS:VOLT?')) # Входное напряжение c нагрузкой
 
-    voltageLOADout = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение  c нагрузкой
-    currentLOADout = float(RIG_DL3031A.query('MEAS:CURR?')) # Выходной ток c нагрузкой
+    voltageLOADout = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?')) # Выходное напряжение  c нагрузкой
+    currentLOADout = float(LOAD.query('MEAS:CURR?')) # Выходной ток c нагрузкой
 
-    RIG_MSO8104.write(':MEAS:STAT:ITEM VRMS,CHAN1')
+    # OSCILLOSCOPE.write(':MEAS:STAT:ITEM VRMS,CHAN1')
 
 
-    Noise = float(RIG_MSO8104.query(':MEAS:ITEM? VRMS,CHAN1')) * 1000
-    NoisePP = float(RIG_MSO8104.query(':MEAS:ITEM? VPP,CHAN1')) * 1000
+    Noise = float(OSCILLOSCOPE.query(':MEAS:VRMS? CHAN1')) * 1000
+    NoisePP = float(OSCILLOSCOPE.query(':MEAS:VPP? CHAN1')) * 1000
 
 
     kpd = ((voltageLOADout * currentLOADout) / (currentLOAD * voltageLOAD)) * 100
 
-    RIG_DL3031A.write(':INP OFF')
-    AKIP.write(':OUTP OFF')
-    RIG_DL831A.write('OUTP CH1, OFF')
+    LOAD.write(':INP OFF')
+    SUPPLY600.write(':OUTP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
 
     
     
@@ -149,53 +136,53 @@ def show_devices():
 
 def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
     time.sleep(1)
-    AKIP.write('SOUR:VOLT ' + str(INVOLT))
-    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+    SUPPLY600.write('SOUR:VOLT ' + str(INVOLT))
+    LOAD.write('CURR ' + str(OUTCURR))
 
-    AKIP.write(':OUTP ON')
+    SUPPLY600.write(':OUTP ON')
     time.sleep(1)
 
-    RIG_DL3031A.write(':INP ON')
-    RIG_DL831A.write('OUTP CH1, ON')
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    LOAD.write(':INP ON')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
     time.sleep(1)
 
     for VoltageDis in np.arange(DVolt,0,-0.05):
         
-        RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
+        CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
         time.sleep(0.1)
-        voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        voltageOUT = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
         
         if voltageOUT <= nominal_output_voltage/2:
             break
-    RIG_DL831A.write('OUTP CH1, OFF')
-    RIG_DL3031A.write(':INP OFF')
-    AKIP.write(':OUTP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    LOAD.write(':INP OFF')
+    SUPPLY600.write(':OUTP OFF')
     print("Напряжение отключения [V]" + str(VoltageDis))
 
     return VoltageDis
 
 def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
     time.sleep(1)
-    AKIP.write('SOUR:VOLT ' + str(INVOLT))
+    SUPPLY600.write('SOUR:VOLT ' + str(INVOLT))
     
 
-    AKIP.write(':OUTP ON')
+    SUPPLY600.write(':OUTP ON')
     time.sleep(1)
 
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
-    RIG_DL831A.write('OUTP CH1, ON')
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
     time.sleep(1)
 
     for VoltageDis in np.arange(DVolt,0,-0.05):
-        RIG_DL831A.write(f':SOUR1:VOLT {VoltageDis}')
+        CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
         time.sleep(0.1)
-        voltageOUT = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        voltageOUT = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
         print(voltageOUT)
         if voltageOUT <= nominal_output_voltage*0.99:
             break
-    RIG_DL831A.write('OUTP CH1, OFF')
-    AKIP.write(':OUTP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    SUPPLY600.write(':OUTP OFF')
 
     return VoltageDis
 
@@ -208,25 +195,25 @@ def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить �
     value = [0, 0, 0, 0, 0, 0, 0]
 
     time.sleep(1)
-    AKIP.write('SOUR:VOLT ' + str(INVOLT))
-    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+    SUPPLY600.write('SOUR:VOLT ' + str(INVOLT))
+    LOAD.write('CURR ' + str(OUTCURR))
 
-    AKIP.write(':OUTP ON')
-
-    time.sleep(1)
-
-    RIG_DL3031A.write(':INP ON')
-    RIG_DL831A.write('OUTP CH1, ON')
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    SUPPLY600.write(':OUTP ON')
 
     time.sleep(1)
 
+    LOAD.write(':INP ON')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
 
-    VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+    time.sleep(1)
+
+
+    VoltOut = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
 
 
     while VoltOut <= intervals[6]*nominal_output_voltage  :
-        VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        VoltOut = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
         print ('Напряжение регулировки: ' + str(VoltOut))
         if VoltOut <= 0.1*nominal_output_voltage:
             value[0] = VoltOut
@@ -245,9 +232,9 @@ def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить �
         
     print(value)
 
-    RIG_DL831A.write('OUTP CH1, OFF')
-    AKIP.write(':OUTP OFF')
-    RIG_DL3031A.write(':INP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    SUPPLY600.write(':OUTP OFF')
+    LOAD.write(':INP OFF')
 
     with open(filepath_reg_down, "a") as file:
         if os.stat(filepath_reg_down).st_size == 0: #if empty file, write a nice header
@@ -265,25 +252,25 @@ def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с 
     value = [0, 0]
 
     time.sleep(1)
-    AKIP.write('SOUR:VOLT ' + str(INVOLT))
-    RIG_DL3031A.write('CURR ' + str(OUTCURR))
+    SUPPLY600.write('SOUR:VOLT ' + str(INVOLT))
+    LOAD.write('CURR ' + str(OUTCURR))
 
-    AKIP.write(':OUTP ON')
-
-    time.sleep(1)
-
-    RIG_DL3031A.write(':INP ON')
-    RIG_DL831A.write('OUTP CH1, ON')
-    RIG_DL831A.write(f':SOUR1:VOLT {DVolt}')
+    SUPPLY600.write(':OUTP ON')
 
     time.sleep(1)
 
+    LOAD.write(':INP ON')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
 
-    VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+    time.sleep(1)
+
+
+    VoltOut = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
 
 
     while VoltOut <= intervals[1]*nominal_output_voltage  :
-        VoltOut = float(KEITHDMM6500.query(':MEASURE:VOLTAGE:DC?'))
+        VoltOut = float(MULTIMETR.query(':MEASURE:VOLTAGE:DC?'))
         print ('Напряжение регулировки: ' + str(VoltOut))
         if VoltOut <= 1.05*nominal_output_voltage:
             value[0] = VoltOut
@@ -293,9 +280,9 @@ def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с 
         
     print(value)
 
-    RIG_DL831A.write('OUTP CH1, OFF')
-    AKIP.write(':OUTP OFF')
-    RIG_DL3031A.write(':INP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    SUPPLY600.write(':OUTP OFF')
+    LOAD.write(':INP OFF')
 
     with open(filepath_reg_up, "a") as file:
         if os.stat(filepath_reg_up).st_size == 0: #if empty file, write a nice header
