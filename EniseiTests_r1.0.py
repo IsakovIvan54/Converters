@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 from tkinter import Tk, Radiobutton, StringVar
 
 
-version = 'Версия: 1.0.7'
+version = 'Версия: БЕТА'
 rm = pyvisa.ResourceManager()
 pygame.mixer.init()
 print(rm.list_resources())
@@ -17,7 +17,7 @@ print(rm.list_resources())
 # SUPPLY600 = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
 # SUPPLY150 = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
 OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0588::DS1ET244602180::INSTR') # Осциллограф 
-CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
+# CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
 MULTIMETR = rm.open_resource('USB0::0x1AB1::0x0C94::DM3O244701540::INSTR') # Мультиметр
 LOAD = rm.open_resource('ASRL7::INSTR') # Электронная нагрузка
 
@@ -27,7 +27,7 @@ MULTIMETR.write(':SENS:VOLTAGE:RANGE:AUTO ON')
 MULTIMETR.write(':SENS:VOLTAGE:NPLC 0.2')
 
 # Настройка источника для выключения 
-CONTROL_SUPPLY.write(':SOUR3:CURR 0.050')
+# CONTROL_SUPPLY.write(':SOUR3:CURR 0.050')
 
 # Настройка осциллографа
 OSCILLOSCOPE.write(':CHAN1:DISP ON')  # Включение первого канала 
@@ -72,8 +72,8 @@ def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить �
     SUPPLY.write(':OUTP ON')
     time.sleep(1)
     LOAD.write(':INP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    # CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
     time.sleep(1)
     VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
 
@@ -96,7 +96,7 @@ def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить �
             value[6] = VoltOut 
     print(value)
 
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    # CONTROL_SUPPLY.write('OUTP CH3, OFF')
     SUPPLY.write(':OUTP OFF')
     LOAD.write(':INP OFF')
 
@@ -130,8 +130,8 @@ def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с 
     SUPPLY.write(':OUTP ON')
     time.sleep(1)
     LOAD.write(':INP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    # CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
     time.sleep(1)
     VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
 
@@ -144,7 +144,7 @@ def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с 
             value[1] = VoltOut 
     print(value)
 
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    # CONTROL_SUPPLY.write('OUTP CH3, OFF')
     SUPPLY.write(':OUTP OFF')
     LOAD.write(':INP OFF')
 
@@ -177,7 +177,7 @@ def reg_Up_But():
 def exit_window():
     root.destroy()
 
-def run_TEST(INVOLT, OUTCURR, DVolt):
+def run_TEST(INVOLT, OUTCURR):
     if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
         SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
         SUPPLY.write('SOUR:CURR 10')
@@ -188,9 +188,9 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     time.sleep(1)
     SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
     LOAD.write('CURR ' + str(OUTCURR))
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    # CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
     SUPPLY.write(':OUTP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLY.write('OUTP CH3, ON')
     time.sleep(1)
     currentHH = float(SUPPLY.query('MEAS:CURR?')) # Входный ток без нагрузки
     voltageHH = float(SUPPLY.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
@@ -208,7 +208,7 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     kpd = ((voltageLOADout * currentLOADout) / (currentLOAD * voltageLOAD)) * 100
     LOAD.write(':INP OFF')
     SUPPLY.write(':OUTP OFF')
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    # CONTROL_SUPPLY.write('OUTP CH3, OFF')
     print('------------------------------------------------------------------------')
     print(f'Напряжение ХХ: {voltageHHout:.3f}')
     print(f'Входной ток ХХ: {currentHH:.3f} A, Входное напряжение ХХ: {voltageHH:.3f} V')
@@ -233,19 +233,19 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
     SUPPLY.write(':OUTP ON')
     time.sleep(1)
     LOAD.write(':INP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    # CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
     time.sleep(1)
 
     for VoltageDis in np.arange(DVolt,0,-0.05):
         
-        CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
+        # CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
         time.sleep(0.1)
         voltageOUT = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
         
         if voltageOUT <= nominal_output_voltage/2:
             break
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    # CONTROL_SUPPLY.write('OUTP CH3, OFF')
     LOAD.write(':INP OFF')
     SUPPLY.write(':OUTP OFF')
     print("Напряжение отключения [V]" + str(VoltageDis))
@@ -263,18 +263,18 @@ def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
     SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
     SUPPLY.write(':OUTP ON')
     time.sleep(1)
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    # CONTROL_SUPPLY.write('OUTP CH3, ON')
     time.sleep(1)
 
     for VoltageDis in np.arange(DVolt,0,-0.05):
-        CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
+        # CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
         time.sleep(0.1)
         voltageOUT = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
         print(voltageOUT)
         if voltageOUT <= nominal_output_voltage*0.99:
             break
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    # CONTROL_SUPPLY.write('OUTP CH3, OFF')
     SUPPLY.write(':OUTP OFF')
     return VoltageDis
 
@@ -294,17 +294,17 @@ def run_script():
     max_line_reg = float(MaxLineReg.get())
     max_load_reg = float(MaxLoadReg.get())
     max_riple_abs = float(MaxRipple.get())
-    disable_volt = float(DisVolt.get())
-    disable_volt_max = float(DisVoltMax.get())
-    disable_volt_min = float(DisVoltMin.get())
+    # disable_volt = float(DisVolt.get())
+    # disable_volt_max = float(DisVoltMax.get())
+    # disable_volt_min = float(DisVoltMin.get())
     
-    valueMin = run_TEST(VolInMin, IoutNom, disable_volt)
-    valueNom = run_TEST(VolInNom, IoutNom, disable_volt)
-    valueMax = run_TEST(VolInMax, IoutNom, disable_volt)
+    valueMin = run_TEST(VolInMin, IoutNom)
+    valueNom = run_TEST(VolInNom, IoutNom)
+    valueMax = run_TEST(VolInMax, IoutNom)
 
-    valueHalf = run_TEST(VolInNom, IoutNomH, disable_volt)
+    valueHalf = run_TEST(VolInNom, IoutNomH)
 
-    DisableVoltage = round(Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage),3)
+    # DisableVoltage = round(Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage),3)
     # DisableVoltageMax = Disable_Volt(VolInNom, disable_volt, nominal_output_voltage)
 
     VoutNoLoadNOM = round(valueNom[0], 3)
@@ -339,7 +339,7 @@ def run_script():
     output_text3.set('Line regulation [%]: ' + str(LineReg))
     output_text4.set('КПД [%]: ' + str(KPDNom)),
     output_text5.set('Пульсации  [мВ p-p]: ' + str(RiplePP))
-    output_text6.set('Напряжение отключения [В]: ' + str(DisableVoltage))
+    # output_text6.set('Напряжение отключения [В]: ' + str(DisableVoltage))
 
     if (nominal_output_voltage - nominal_output_voltage*accur_output_voltage/100) <= VoutLoadNom <= (nominal_output_voltage + nominal_output_voltage*accur_output_voltage/100):
         output_label1.config(fg="green")
@@ -360,10 +360,10 @@ def run_script():
         output_label5.config(fg="green")
     else: 
         output_label5.config(fg="red")
-    if (disable_volt_min <= DisableVoltage <= disable_volt_max):
-        output_label6.config(fg="green")
-    else: 
-        output_label6.config(fg="red")
+    # if (disable_volt_min <= DisableVoltage <= disable_volt_max):
+    #     output_label6.config(fg="green")
+    # else: 
+    #     output_label6.config(fg="red")
 
     # Write results to a file
     with open(filepath, "a") as file:
@@ -379,21 +379,21 @@ def run_script():
                         "КПД при Vin" + str(VolInMin) + " [V];" + 
                         "КПД при Vin" + str(VolInNom)+ " [V];" + 
                         "КПД при Vin" + str(VolInMax)+ " [V];" + 
-                        "Напряжение отключения [V];" + 
+                        # "Напряжение отключения [V];" + 
                         "Выходное напряжение(половина нагрузки) при Vin" + str(VolInNom)+ " [V];" +
                         "\n")
-        file.write("{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax, DisableVoltage,VoutLoadNomHalf)) # log the data
+        file.write("{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax, VoutLoadNomHalf)) # log the data
     file.close()
 
     pygame.mixer.music.load('sound.wav')
     pygame.mixer.music.play(0) 
 
 root = tk.Tk()
-root.title('Программное обеспечение для проверки DC-DC преобразователей серии "Иртыш"')
+root.title('Программное обеспечение для проверки DC-DC преобразователей серии "Енисей"')
 root.geometry("1550x600")
 
 # Описание шапки
-tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 14 normal").place(x=500, y=0)
+tk.Label(root, text='Проверка DC-DC преобразователей серии "Енисей"', font="Verdana 14 normal").place(x=500, y=0)
 tk.Label(root, text='Наименование преобразователя:', font="Verdana 14 normal").place(x=500, y=35)
 NameConverter = tk.Entry(root,font=("Arial", 14))
 NameConverter.place(x=830, y=35)
