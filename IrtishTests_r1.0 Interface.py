@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 from tkinter import Tk, Radiobutton, StringVar
 
 
-version = 'Версия: 1.0.7'
+version = 'Версия: 1.1.0'
 # rm = pyvisa.ResourceManager()
 # pygame.mixer.init()
 # print(rm.list_resources())
@@ -157,6 +157,9 @@ def chose_dev600():
     pygame.mixer.music.load('sound.wav')
     pygame.mixer.music.play(0)
     return value
+
+def issue_prot():
+    print('Протокол выпущен!')
 
 def reg_Down_But():
     VolInNom = int(InPutV2.get())
@@ -391,11 +394,13 @@ def run_script():
 w_column = 5
 
 root = tk.Tk()
-root.title('Программное обеспечение для проверки DC-DC преобразователей серии "Иртыш"')
-root.geometry("1550x600")
+root.title('ПО для проверки DC-DC преобразователей серии "Иртыш"')
+root.geometry("1130x600")
+
 
 # Описание шапки
 tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 14 normal").place(x=460, y=0)
+
 tk.Label(root, text='Наименование преобразователя:', font="Verdana 20 normal").place(x=300, y=35)
 NameConverter = tk.Entry(root,font=("Arial", 20))
 NameConverter.place(x=790, y=35)
@@ -403,29 +408,31 @@ NameConverter.place(x=790, y=35)
 # Добавление версии программы
 tk.Label(root, text=version, font="Verdana 8 normal").place(x=0, y=580)
 
+
+
 # Добавление логотипа
 label_image1 = Image.open("EKBlogoNew.png")
 img=label_image1.resize((95, 70))
 label_image = ImageTk.PhotoImage(img)
-tk.Label(root, image=label_image).place(x=1445, y=520)
+tk.Label(root, image=label_image).place(x=1020, y=520)
 
 
 # Создание фреймов
 input_frame = tk.LabelFrame(root, text="Параметры преобразователя", font=("Arial", 14))
 input_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
-input_frame.place(x=0, y=70)
+input_frame.place(x=5, y=70,width = 1120)
 
 button_frame = tk.LabelFrame(root, text="Меню", font=("Arial", 14))
-button_frame.pack(padx=10, pady=10)
-button_frame.place(x=750, y=380)
+button_frame.pack(padx=5, pady=5)
+button_frame.place(x=95, y=500,height=85)
 
 output_frame = tk.LabelFrame(root, text="Измеренные параметры преобразователя", font=("Arial", 14))
-output_frame.pack(padx=10, pady=10)
-output_frame.place(x=0, y=380)
+output_frame.pack(padx=10, pady=10,ipadx=600, ipady=555)
+output_frame.place(x=5, y=380,width = 1120)
 
 suplly_frame = tk.LabelFrame(root, text="Выбор источника питания", font=("Arial", 14))
 suplly_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
-suplly_frame.place(x=0, y=0)
+suplly_frame.place(x=5, y=0)
 
 
 # Настройка выбора источника 
@@ -488,47 +495,77 @@ tk.Label(input_frame, text='Максимальное управляющее на
 DisVoltMax = tk.Entry(input_frame,font=("Arial", 14),width=w_column)
 DisVoltMax.grid(row=6, column=3,  ipadx=6, ipady=7)
 
+
+
 # Меню
-run_button = tk.Button(button_frame, text='Запуск проверки', command=run_script)
-run_button.config(width=20, height=2)
-run_button.grid(row=0, column=1)
+run_button = tk.Button(button_frame, text='Запуск проверки', command=run_script, font="Verdana 12 normal",compound='center',wraplength=100)
+run_button.config(width=15, height=2)
+run_button.grid(row=0, column=0,padx=5,pady=5)
 
-reg_down_button = tk.Button(button_frame, text='Регулировка вниз', command=reg_Down_But)
-reg_down_button.config(width=20, height=2)
-reg_down_button.grid(row=1, column=0)
+reg_down_button = tk.Button(button_frame, text='Регулировка вниз', command=reg_Down_But, font="Verdana 12 normal",compound='center',wraplength=120)
+reg_down_button.config(width=15, height=2)
+reg_down_button.grid(row=0, column=1,padx=5,pady=5)
 
-reg_down_button = tk.Button(button_frame, text='Регулировка вверх', command=reg_Up_But)
-reg_down_button.config(width=20, height=2)
-reg_down_button.grid(row=0, column=0)
+reg_down_button = tk.Button(button_frame, text='Регулировка вверх', command=reg_Up_But, font="Verdana 12 normal",compound='center',wraplength=120)
+reg_down_button.config(width=15, height=2)
+reg_down_button.grid(row=0, column=2,padx=5,pady=5)
 
-exit_button = tk.Button(button_frame, text='Выход', command=exit_window)
-exit_button.config(width=20, height=2)
-exit_button.grid(row=1, column=1)
+protocol_button = tk.Button(button_frame, text='Выпустить протокол', command=issue_prot, font="Verdana 12 normal",compound='center',wraplength=100)
+protocol_button.config(width=15, height=2)
+protocol_button.grid(row=0, column=3,padx=5,pady=5)
+
+exit_button = tk.Button(button_frame, text='Выход', command=exit_window, font="Verdana 12 normal",compound='center')
+exit_button.config(width=15, height=2)
+exit_button.grid(row=0, column=4,padx=5,pady=5)
 
 # Измеренные параметры
 output_text1 = tk.StringVar()
 output_label1 = tk.Label(output_frame, textvariable=output_text1, font="Verdana 14 normal")
-output_label1.grid(row=0, column=0)
+output_label1.grid(row=0, column=1)
 
 output_text2 = tk.StringVar()
 output_label2 = tk.Label(output_frame, textvariable=output_text2, font="Verdana 14 normal")
-output_label2.grid(row=1, column=0)
+output_label2.grid(row=1, column=1)
 
 output_text3 = tk.StringVar()
 output_label3 = tk.Label(output_frame, textvariable=output_text3, font="Verdana 14 normal")
-output_label3.grid(row=2, column=0)
+output_label3.grid(row=2, column=1)
 
 output_text4 = tk.StringVar()
 output_label4 = tk.Label(output_frame, textvariable=output_text4, font="Verdana 14 normal")
-output_label4.grid(row=0, column=1)
+output_label4.grid(row=0, column=3)
 
 output_text5 = tk.StringVar()
 output_label5 = tk.Label(output_frame, textvariable=output_text5, font="Verdana 14 normal")
-output_label5.grid(row=1, column=1)
+output_label5.grid(row=1, column=3)
 
 output_text6 = tk.StringVar()
 output_label6 = tk.Label(output_frame, textvariable=output_text6, font="Verdana 14 normal")
-output_label6.grid(row=2, column=1)
+output_label6.grid(row=2, column=3)
+
+# sticky="n"
+labelNULL = tk.StringVar()
+labelNULL.set('                                           ')
+labelNULL0 = tk.StringVar()
+labelNULL0.set('              ')
+
+output_labelNULL01 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL01.grid(row=0, column=0)
+
+output_labelNULL02 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL02.grid(row=1, column=0)
+
+output_labelNULL03 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL03.grid(row=2, column=0)
+
+output_labelNULL1 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL1.grid(row=0, column=2)
+
+output_labelNULL2 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL2.grid(row=1, column=2)
+
+output_labelNULL3 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL3.grid(row=2, column=2)
 
 #Новая вставка с постоянным текстом
 #Делаем так, чтобы надписи были всегда
@@ -538,6 +575,7 @@ output_text3.set('Line regulation [%]: ')
 output_text4.set('КПД [%]: ')
 output_text5.set('Пульсации  [мВ p-p]: ')
 output_text6.set('Напряжение отключения [В]: ')
+
 
 # Start GUI event loop
 root.mainloop()
