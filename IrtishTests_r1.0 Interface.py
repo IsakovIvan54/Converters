@@ -420,19 +420,19 @@ tk.Label(root, image=label_image).place(x=1020, y=520)
 # Создание фреймов
 input_frame = tk.LabelFrame(root, text="Параметры преобразователя", font=("Arial", 14))
 input_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
-input_frame.place(x=0, y=70)
+input_frame.place(x=5, y=70,width = 1120)
 
 button_frame = tk.LabelFrame(root, text="Меню", font=("Arial", 14))
-button_frame.pack(padx=10, pady=10)
-button_frame.place(x=750, y=380)
+button_frame.pack(padx=5, pady=5)
+button_frame.place(x=95, y=500,height=85)
 
 output_frame = tk.LabelFrame(root, text="Измеренные параметры преобразователя", font=("Arial", 14))
-output_frame.pack(padx=10, pady=10)
-output_frame.place(x=0, y=380)
+output_frame.pack(padx=10, pady=10,ipadx=600, ipady=555)
+output_frame.place(x=5, y=380,width = 1120)
 
 suplly_frame = tk.LabelFrame(root, text="Выбор источника питания", font=("Arial", 14))
 suplly_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
-suplly_frame.place(x=0, y=0)
+suplly_frame.place(x=5, y=0)
 
 
 # Настройка выбора источника 
@@ -521,27 +521,51 @@ exit_button.grid(row=0, column=4,padx=5,pady=5)
 # Измеренные параметры
 output_text1 = tk.StringVar()
 output_label1 = tk.Label(output_frame, textvariable=output_text1, font="Verdana 14 normal")
-output_label1.grid(row=0, column=0)
+output_label1.grid(row=0, column=1)
 
 output_text2 = tk.StringVar()
 output_label2 = tk.Label(output_frame, textvariable=output_text2, font="Verdana 14 normal")
-output_label2.grid(row=1, column=0)
+output_label2.grid(row=1, column=1)
 
 output_text3 = tk.StringVar()
 output_label3 = tk.Label(output_frame, textvariable=output_text3, font="Verdana 14 normal")
-output_label3.grid(row=2, column=0)
+output_label3.grid(row=2, column=1)
 
 output_text4 = tk.StringVar()
 output_label4 = tk.Label(output_frame, textvariable=output_text4, font="Verdana 14 normal")
-output_label4.grid(row=0, column=1)
+output_label4.grid(row=0, column=3)
 
 output_text5 = tk.StringVar()
 output_label5 = tk.Label(output_frame, textvariable=output_text5, font="Verdana 14 normal")
-output_label5.grid(row=1, column=1)
+output_label5.grid(row=1, column=3)
 
 output_text6 = tk.StringVar()
 output_label6 = tk.Label(output_frame, textvariable=output_text6, font="Verdana 14 normal")
-output_label6.grid(row=2, column=1)
+output_label6.grid(row=2, column=3)
+
+# sticky="n"
+labelNULL = tk.StringVar()
+labelNULL.set('                                           ')
+labelNULL0 = tk.StringVar()
+labelNULL0.set('              ')
+
+output_labelNULL01 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL01.grid(row=0, column=0)
+
+output_labelNULL02 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL02.grid(row=1, column=0)
+
+output_labelNULL03 = tk.Label(output_frame, textvariable=labelNULL0, font="Verdana 14 normal")
+output_labelNULL03.grid(row=2, column=0)
+
+output_labelNULL1 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL1.grid(row=0, column=2)
+
+output_labelNULL2 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL2.grid(row=1, column=2)
+
+output_labelNULL3 = tk.Label(output_frame, textvariable=labelNULL, font="Verdana 14 normal")
+output_labelNULL3.grid(row=2, column=2)
 
 #Новая вставка с постоянным текстом
 #Делаем так, чтобы надписи были всегда
@@ -551,6 +575,7 @@ output_text3.set('Line regulation [%]: ')
 output_text4.set('КПД [%]: ')
 output_text5.set('Пульсации  [мВ p-p]: ')
 output_text6.set('Напряжение отключения [В]: ')
+
 
 # Start GUI event loop
 root.mainloop()
