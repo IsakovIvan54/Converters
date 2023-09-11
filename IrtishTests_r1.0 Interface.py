@@ -403,11 +403,11 @@ root.geometry("1920x1080")
 
 
 # Описание шапки
-tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 24 normal").place(x=460, y=0)
+tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 30 normal").place(x=460, y=0)
 
-tk.Label(root, text='Наименование преобразователя:', font="Verdana 30 normal").place(x=430, y=40)
-NameConverter = tk.Entry(root,font=("Arial", 30))
-NameConverter.place(x=1130, y=45)
+tk.Label(root, text='Наименование преобразователя:', font="Verdana 24 normal").place(x=530, y=65)
+NameConverter = tk.Entry(root,font=("Arial", 24))
+NameConverter.place(x=1090, y=70)
 
 # Добавление версии программы
 tk.Label(root, text=version, font="Verdana 8 normal").place(x=0, y=990)
