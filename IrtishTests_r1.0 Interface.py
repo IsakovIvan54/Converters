@@ -483,7 +483,7 @@ tk.Label(input_frame, text='Line regulation max[%]:', font="Verdana 24 normal").
 MaxLineReg = tk.Entry(input_frame,font=("Arial", 24),width=w_column)
 MaxLineReg.grid(row=2, column=3,  ipadx=6, ipady=7)
 
-tk.Label(input_frame, text='Номинальный КПД[%]:', font="Verdana 24 normal").grid(row=3, column=2)
+tk.Label(input_frame, text='Минимальый КПД[%]:', font="Verdana 24 normal").grid(row=3, column=2)
 NominalKpd = tk.Entry(input_frame,font=("Arial", 24),width=w_column)
 NominalKpd.grid(row=3, column=3,  ipadx=6, ipady=7)
 
