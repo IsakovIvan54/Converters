@@ -403,11 +403,11 @@ root.geometry("1920x1080")
 
 
 # Описание шапки
-tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 24 normal").place(x=460, y=0)
+tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 30 normal").place(x=460, y=0)
 
-tk.Label(root, text='Наименование преобразователя:', font="Verdana 30 normal").place(x=430, y=40)
-NameConverter = tk.Entry(root,font=("Arial", 30))
-NameConverter.place(x=1130, y=45)
+tk.Label(root, text='Наименование преобразователя:', font="Verdana 24 normal").place(x=530, y=65)
+NameConverter = tk.Entry(root,font=("Arial", 24))
+NameConverter.place(x=1090, y=70)
 
 # Добавление версии программы
 tk.Label(root, text=version, font="Verdana 8 normal").place(x=0, y=990)
@@ -483,7 +483,7 @@ tk.Label(input_frame, text='Line regulation max[%]:', font="Verdana 24 normal").
 MaxLineReg = tk.Entry(input_frame,font=("Arial", 24),width=w_column)
 MaxLineReg.grid(row=2, column=3,  ipadx=6, ipady=7)
 
-tk.Label(input_frame, text='Номинальный КПД[%]:', font="Verdana 24 normal").grid(row=3, column=2)
+tk.Label(input_frame, text='Минимальый КПД[%]:', font="Verdana 24 normal").grid(row=3, column=2)
 NominalKpd = tk.Entry(input_frame,font=("Arial", 24),width=w_column)
 NominalKpd.grid(row=3, column=3,  ipadx=6, ipady=7)
 
