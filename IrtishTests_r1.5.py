@@ -19,7 +19,7 @@ print(rm.list_resources())
 OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0588::DS1ET244602180::INSTR') # Осциллограф 
 CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
 MULTIMETR = rm.open_resource('USB0::0x1AB1::0x0C94::DM3O244701540::INSTR') # Мультиметр
-LOAD = rm.open_resource('ASRL6::INSTR') # Электронная нагрузка
+LOAD = rm.open_resource('ASRL7::INSTR') # Электронная нагрузка
 
 # Настройка мультиметра
 MULTIMETR.write(':SENS:FUNC VOLT')
@@ -188,6 +188,9 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
         SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
         SUPPLY.write('SOUR:CURR 30')
 
+    LOAD.write('SYST:REM')
+    LOAD.write('FUNC CURR')
+
     time.sleep(1)
     SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
     LOAD.write('CURR ' + str(OUTCURR))
@@ -222,6 +225,39 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
     return[voltageHHout, voltageLOADout, kpd, Noise, NoisePP]
 
+def run_CURGEN(INVOLT,DVolt):
+    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
+        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
+        SUPPLY.write('SOUR:CURR 10')
+    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
+        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
+        SUPPLY.write('SOUR:CURR 30')
+
+    LOAD.write('SYST:REM')
+    LOAD.write('FUNC RES')
+    LOAD.write('RES MIN')
+    
+    time.sleep(1)
+    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    SUPPLY.write(':OUTP ON')
+    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    time.sleep(2)
+    LOAD.write(':INP ON')
+    time.sleep(3)
+
+    voltageCURRENTout = float(MULTIMETR.query(':MEAS:VOLT:DC?')) # Выходное напряжение  c нагрузкой
+    currentCURRENTout = float(LOAD.query('MEAS:CURR?')) # Выходной ток c нагрузкой
+    NoisePP = float(OSCILLOSCOPE.query(':MEAS:VPP? CHAN1')) * 1000
+
+    LOAD.write(':INP OFF')
+    SUPPLY.write(':OUTP OFF')
+    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    print('------------------------------------------------------------------------')
+    print(f'Напряжение под нагрузкой: {voltageCURRENTout:.3f} V, Ток под нагрузкой: {currentCURRENTout:.3f} A')
+    print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
+    return[voltageCURRENTout, currentCURRENTout, NoisePP]
+
 def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
     if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
         SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
@@ -230,6 +266,9 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
         SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
         SUPPLY.write('SOUR:CURR 30')
 
+    LOAD.write('SYST:REM')
+    LOAD.write('FUNC CURR')
+        
     time.sleep(1)
     SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
     LOAD.write('CURR ' + str(OUTCURR))
@@ -284,7 +323,8 @@ def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
 def run_script():
 
     dateString = NameConverter.get()
-    filepath = "./" + dateString + ".csv"
+    filepath = "./Result/" + dateString + ".csv"
+    SerialNum = SNConverter.get()
 
     VolInMin = int(InPutV1.get())
     VolInNom = int(InPutV2.get())
@@ -306,6 +346,8 @@ def run_script():
     valueMax = run_TEST(VolInMax, IoutNom, disable_volt)
 
     valueHalf = run_TEST(VolInNom, IoutNomH, disable_volt)
+
+    valueCURGEN = run_CURGEN(VolInNom,disable_volt)
 
     DisableVoltage = round(Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage),3)
     # DisableVoltageMax = Disable_Volt(VolInNom, disable_volt, nominal_output_voltage)
@@ -329,13 +371,24 @@ def run_script():
     LoadReg = round((VoutLoadNom - VoutNoLoadNOM) / VoutLoadNom * 100, 3)
     if LoadReg <= 0:
         LoadReg = -1*LoadReg
+    
+    LoadLineReg = LineReg + LoadReg
 
     RiplePP = round(valueNom[4],1)
     RipleRMS = round(valueNom[3],1)
 
+    RiplePPMin = round(valueMin[4],1)
+    RiplePPNom = round(valueNom[4],1)
+    RiplePPMax = round(valueMax[4],1)
+
     KPDMin = round(valueMin[2],1)
     KPDNom = round(valueNom[2],1)
     KPDMax = round(valueMax[2],1)
+
+    VoutCURGEN = round(valueCURGEN[0],3)
+    IoutCURGEN = round(valueCURGEN[1],3)
+    NoiseCURGEN = round(valueCURGEN[2],3)
+
 
     output_textout1.set(str(VoutLoadNom))
     output_textout2.set(str(LoadReg))
@@ -393,24 +446,70 @@ def run_script():
         output_labelout6.config(background="red")
 # ------------------------------------------------------
 
+    # # Write results to a file
+    # with open(filepath, "a") as file:
+    #     if os.stat(filepath).st_size == 0: #if empty file, write a nice header
+    #         file.write("Выходное напряжение (без нагрузки) [V];" + 
+    #                     "Выходное напряжение при Vin" + str(VolInMin) + " [V];" + 
+    #                     "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + 
+    #                     "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + 
+    #                     "LineReg [%];"+ 
+    #                     "LoadReg [%];"+
+    #                     "Пульсации [мВp-p];"+
+    #                     "ПульсацииRMS [мВ];" + 
+    #                     "КПД при Vin" + str(VolInMin) + " [V];" + 
+    #                     "КПД при Vin" + str(VolInNom)+ " [V];" + 
+    #                     "КПД при Vin" + str(VolInMax)+ " [V];" + 
+    #                     "Напряжение отключения [V];" + 
+    #                     "Выходное напряжение(половина нагрузки) при Vin" + str(VolInNom)+ " [V];" +
+    #                     "\n")
+    #     file.write("{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax, DisableVoltage,VoutLoadNomHalf)) # log the data
+    # file.close()
+
     # Write results to a file
     with open(filepath, "a") as file:
         if os.stat(filepath).st_size == 0: #if empty file, write a nice header
-            file.write("Выходное напряжение (без нагрузки) [V];" + 
-                        "Выходное напряжение при Vin" + str(VolInMin) + " [V];" + 
-                        "Выходное напряжение при Vin" + str(VolInNom)+ " [V];" + 
-                        "Выходное напряжение при Vin" + str(VolInMax)+ " [V];" + 
+            file.write( "Серийный номер;" +
+                        "Выходное напряжение (без нагрузки) [В];" + 
+                        "Выходное напряжение при Vin" + str(VolInMin) + " [В];" + 
+                        "Выходное напряжение при Vin" + str(VolInNom)+ " [В];" + 
+                        "Выходное напряжение при Vin" + str(VolInMax)+ " [В];" + 
+                        "Выходное напряжение(половина нагрузки) при Vin" + str(VolInNom)+ " [В];" +
                         "LineReg [%];"+ 
                         "LoadReg [%];"+
-                        "Пульсации [мВp-p];"+
+                        "LoadReg + LineReg [%];"+
+                        "Пульсации при Vin" + str(VolInMin) + " [мВp-p];" +
+                        "Пульсации при Vin" + str(VolInNom) + " [мВp-p];" +
+                        "Пульсации при Vin" + str(VolInMax) + " [мВp-p];" +
                         "ПульсацииRMS [мВ];" + 
-                        "КПД при Vin" + str(VolInMin) + " [V];" + 
-                        "КПД при Vin" + str(VolInNom)+ " [V];" + 
-                        "КПД при Vin" + str(VolInMax)+ " [V];" + 
-                        "Напряжение отключения [V];" + 
-                        "Выходное напряжение(половина нагрузки) при Vin" + str(VolInNom)+ " [V];" +
+                        "КПД при Vin" + str(VolInMin) + " [В];" + 
+                        "КПД при Vin" + str(VolInNom)+ " [В];" + 
+                        "КПД при Vin" + str(VolInMax)+ " [В];" + 
+                        "Напряжение отключения [В];" + 
+                        "Выходное напряжение в режиме генератора тока [В];" + 
+                        "Выходной ток в режиме генератора тока [А];" + 
+                        "Пульсации в режиме генератора тока [мВр-р];" + 
                         "\n")
-        file.write("{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(VoutNoLoadNOM, VoutLoadMin, VoutLoadNom, VoutLoadMax, LineReg, LoadReg,RiplePP, RipleRMS, KPDMin, KPDNom, KPDMax, DisableVoltage,VoutLoadNomHalf)) # log the data
+        file.write("{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(SerialNum,
+                                                                        VoutNoLoadNOM, 
+                                                                        VoutLoadMin, 
+                                                                        VoutLoadNom, 
+                                                                        VoutLoadMax, 
+                                                                        VoutLoadNomHalf,
+                                                                        LineReg, 
+                                                                        LoadReg,
+                                                                        LoadLineReg,
+                                                                        RiplePPMin, 
+                                                                        RiplePPNom,
+                                                                        RiplePPMax,
+                                                                        RipleRMS, 
+                                                                        KPDMin, 
+                                                                        KPDNom, 
+                                                                        KPDMax, 
+                                                                        DisableVoltage,
+                                                                        VoutCURGEN,
+                                                                        IoutCURGEN,
+                                                                        NoiseCURGEN)) # log the data
     file.close()
 
     pygame.mixer.music.load('sound.wav')
@@ -429,6 +528,10 @@ tk.Label(root, text='Проверка DC-DC преобразователей с�
 tk.Label(root, text='Наименование преобразователя:', font="Verdana 30 normal").place(x=430, y=40)
 NameConverter = tk.Entry(root,font=("Arial", 30))
 NameConverter.place(x=1130, y=45)
+
+tk.Label(root, text='Серийный номер:', font="Verdana 24 normal").place(x=1580, y=0)
+SNConverter = tk.Entry(root,font=("Arial", 24))
+SNConverter.place(x=1580, y=45)
 
 # Добавление версии программы
 tk.Label(root, text=version, font="Verdana 8 normal").place(x=0, y=990)
