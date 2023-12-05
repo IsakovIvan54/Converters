@@ -10,13 +10,13 @@ def getIDN():
     name_device = []
     name_visa = []
     for i in range(0,len(devices)):
-        print("VISA: " + devices[i])
         name_visa.append(devices[i])
         instrument = rm.open_resource(devices[i])
         name_device.append(instrument.query('*IDN?'))
+        print(instrument.query('*IDN?') + "| VISA: " + devices[i])
     return name_device, name_visa
 
 
 devices = getIDN()
-for i in range(0,len(devices[0])):
-    print(devices[0][i])
+# for i in range(0,len(devices[0])):
+#     print(devices[0][i])

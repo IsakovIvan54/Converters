@@ -14,20 +14,19 @@ rm = pyvisa.ResourceManager()
 pygame.mixer.init()
 print(rm.list_resources())
 
-# SUPPLY600 = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-# SUPPLY150 = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
+SUPPLYAC = rm.open_resource('ASRL8::INSTR') # Источник AC
 OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0588::DS1ET244602180::INSTR') # Осциллограф 
 CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
 MULTIMETR = rm.open_resource('USB0::0x1AB1::0x0C94::DM3O244701540::INSTR') # Мультиметр
 LOAD = rm.open_resource('ASRL4::INSTR') # Электронная нагрузка
 
 # Настройка мультиметра
-MULTIMETR.write(':SENS:VOLT:DC')
-MULTIMETR.write(':SENS:VOLT:RANG:AUTO ON')
-MULTIMETR.write(':SENS:VOLT:NPLC 0.2')
+MULTIMETR.write(':SENS:FUNC VOLT')
+MULTIMETR.write(':SENS:VOLTAGE:RANGE:AUTO ON')
+MULTIMETR.write(':SENS:VOLTAGE:NPLC 0.2')
 
 # Настройка источника для выключения 
-CONTROL_SUPPLY.write(':SOUR3:CURR 0.050')
+CONTROL_SUPPLY.write(':SOUR3:CURR 0.005')
 
 # Настройка осциллографа
 OSCILLOSCOPE.write(':CHAN1:DISP ON')  # Включение первого канала 
@@ -44,177 +43,67 @@ OSCILLOSCOPE.write(':TRIG:EDGE:LEV 0.07 ') # Установка тригера 7
 LOAD.write('SYST:REM')
 LOAD.write('FUNC CURR')
 
-def chose_dev150():
-    print("Выбран источник 150В")
-    
-def chose_dev600():
-    print("Выбран источник 600В")
-
-# Функции кнопок
-def reg_Down(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего правого положения в левое
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
+# Настройка AC источника
+SUPPLYAC.write(':MODE AC-INT')
+SUPPLYAC.write(':FREQ 50')
+SUPPLYAC.write(':VOLT:RANG 200')
 
 
-    dateString_reg_down =  NameConverter.get() + 'Reg_down'
-    filepath_reg_down = "./" + dateString_reg_down + ".csv"
-    
-    intervals = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-    value = [0, 0, 0, 0, 0, 0, 0]
-
-    time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
-    LOAD.write('CURR ' + str(OUTCURR))
-    SUPPLY.write(':OUTP ON')
-    time.sleep(1)
-    LOAD.write(':INP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    time.sleep(1)
-    VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
-
-    while VoltOut <= intervals[6]*nominal_output_voltage  :
-        VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
-        print ('Напряжение регулировки: ' + str(VoltOut))
-        if VoltOut <= 0.1*nominal_output_voltage:
-            value[0] = VoltOut
-        elif (VoltOut > 0.1*nominal_output_voltage) & (VoltOut <= 0.2*nominal_output_voltage):
-            value[1] = VoltOut
-        elif (VoltOut > 0.2*nominal_output_voltage) & (VoltOut <= 0.3*nominal_output_voltage):
-            value[2] = VoltOut
-        elif (VoltOut > 0.3*nominal_output_voltage) & (VoltOut <= 0.4*nominal_output_voltage):
-            value[3] = VoltOut
-        elif (VoltOut > 0.4*nominal_output_voltage) & (VoltOut <= 0.5*nominal_output_voltage):
-            value[4] = VoltOut
-        elif (VoltOut > 0.5*nominal_output_voltage) & (VoltOut <= 0.6*nominal_output_voltage):
-            value[5] = VoltOut
-        elif (VoltOut > 0.6*nominal_output_voltage) & (VoltOut <= 0.7*nominal_output_voltage):
-            value[6] = VoltOut 
-    print(value)
-
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
-    SUPPLY.write(':OUTP OFF')
-    LOAD.write(':INP OFF')
-
-    with open(filepath_reg_down, "a") as file:
-        if os.stat(filepath_reg_down).st_size == 0: #if empty file, write a nice header
-            file.write("Регулировка" + str(intervals[0]) + " От номинального [V];" + "Регулировка" + str(intervals[1]) + " От номинального [V];" + "Регулировка" + str(intervals[2]) + " От номинального [V];" + "Регулировка" + str(intervals[3]) + " От номинального [V]; "+"Регулировка" + str(intervals[4]) + " От номинального [V];"+ "Регулировка" + str(intervals[5]) + " От номинального [V];" + "Регулировка" + str(intervals[6]) + " От номинального [V];" +"\n")
-        file.write("{};{};{};{};{};{};{};\n".format(value[0], value[1], value[2], value[3], value[4], value[5], value[6])) # log the data
-    file.close()
-
-    pygame.mixer.music.load('sound.wav')
-    pygame.mixer.music.play(0)
-    return value
-
-def reg_Up(INVOLT, OUTCURR, DVolt, nominal_output_voltage): # Крутить с крайнего правого положения в левое
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
-   
-    dateString_reg_up = NameConverter.get() + 'Reg_up'
-    filepath_reg_up = "./" + dateString_reg_up + ".csv"
-
-    intervals = [1.05, 1.1]
-    value = [0, 0]
-
-    time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
-    LOAD.write('CURR ' + str(OUTCURR))
-    SUPPLY.write(':OUTP ON')
-    time.sleep(1)
-    LOAD.write(':INP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    time.sleep(1)
-    VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
-
-    while VoltOut <= intervals[1]*nominal_output_voltage  :
-        VoltOut = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
-        print ('Напряжение регулировки: ' + str(VoltOut))
-        if VoltOut <= 1.05*nominal_output_voltage:
-            value[0] = VoltOut
-        elif (VoltOut > 1.05*nominal_output_voltage) & (VoltOut <= 1.1*nominal_output_voltage):
-            value[1] = VoltOut 
-    print(value)
-
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
-    SUPPLY.write(':OUTP OFF')
-    LOAD.write(':INP OFF')
-
-    with open(filepath_reg_up, "a") as file:
-        if os.stat(filepath_reg_up).st_size == 0: #if empty file, write a nice header
-            file.write("Регулировка" + str(intervals[0]) + " От номинального [V];" + "Регулировка" + str(intervals[1]) +"\n")
-        file.write("{};{};\n".format(value[0], value[1])) # log the data
-    file.close()
-
-    pygame.mixer.music.load('sound.wav')
-    pygame.mixer.music.play(0)
-    return value
 
 def issue_prot():
     print('Протокол выпущен!')
 
 def reg_Down_But():
-    VolInNom = int(InPutV2.get())
-    IoutNom = float(OutCurr.get())
-    nominal_output_voltage = float(NomOutVolt.get())
-    disable_volt = float(DisVolt.get())
-    reg_Down_list = reg_Down(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+#     VolInNom = int(InPutV2.get())
+#     IoutNom = float(OutCurr.get())
+#     nominal_output_voltage = float(NomOutVolt.get())
+#     disable_volt = float(DisVolt.get())
+#     reg_Down_list = reg_Down(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
     print('Регулировка выходного напряжения:' + str(reg_Down_list))
 
 def reg_Up_But():
-    VolInNom = int(InPutV2.get())
-    IoutNom = float(OutCurr.get())
-    nominal_output_voltage = float(NomOutVolt.get())
-    disable_volt = float(DisVolt.get())
-    reg_Up_list = reg_Up(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
+    # VolInNom = int(InPutV2.get())
+    # IoutNom = float(OutCurr.get())
+    # nominal_output_voltage = float(NomOutVolt.get())
+    # disable_volt = float(DisVolt.get())
+    # reg_Up_list = reg_Up(VolInNom, IoutNom, disable_volt, nominal_output_voltage)
     print('Регулировка выходного напряжения:' + str(reg_Up_list))
 
 def exit_window():
     root.destroy()
 
-def run_TEST(INVOLT, OUTCURR, DVolt):
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
+def run_TEST(INVOLT, OUTCURR):
 
     LOAD.write('SYST:REM')
     LOAD.write('FUNC CURR')
 
     time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
+    SUPPLYAC.write(':VOLT ' + str(INVOLT))
     LOAD.write('CURR ' + str(OUTCURR))
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    SUPPLY.write(':OUTP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
+    # CONTROL_SUPPLYAC.write(f':SOUR3:VOLT {DVolt}')
+    SUPPLYAC.write(':OUTP ON')
+    # CONTROL_SUPPLYAC.write('OUTP CH3, ON')
     time.sleep(1)
-    currentHH = float(SUPPLY.query('MEAS:CURR?')) # Входный ток без нагрузки
-    voltageHH = float(SUPPLY.query('MEAS:VOLT?')) # Входное напряжение без нагрузки
+    currentHH = float(SUPPLYAC.query('MEAS:CURR:RMS?')) # Входный ток без нагрузки
+    voltageHH = float(SUPPLYAC.query('MEAS:VOLT:RMS?')) # Входное напряжение без нагрузки
+    pfHH = float(SUPPLYAC.query(':MEAS:POW:PFAC?')) # Коэффициент мощности на холостом ходу
     time.sleep(2)
-    voltageHHout = float(MULTIMETR.query(':MEASure:VOLTage:DC?')) # Выходное напряжение без нагрузки
+    voltageHHout = float(MULTIMETR.query(':MEAS:VOLT:DC?')) # Выходное напряжение без нагрузки
     time.sleep(0.2)
     LOAD.write(':INP ON')
     time.sleep(3)
-    currentLOAD = float(SUPPLY.query('MEAS:CURR?')) # Входный ток c нагрузкой
-    voltageLOAD = float(SUPPLY.query('MEAS:VOLT?')) # Входное напряжение c нагрузкой
+    currentLOAD = float(SUPPLYAC.query('MEAS:CURR:RMS?')) # Входный ток c нагрузкой
+    voltageLOAD = float(SUPPLYAC.query('MEAS:VOLT:RMS?')) # Входное напряжение c нагрузкой
+    pfLOAD = float(SUPPLYAC.query(':MEAS:POW:PFAC?')) # Коэффициент мощности под нагрузкой
+    inPOWERLOAD = float(SUPPLYAC.query(':MEAS:POW?')) # Входная мощность
     voltageLOADout = float(MULTIMETR.query(':MEAS:VOLT:DC?')) # Выходное напряжение  c нагрузкой
     currentLOADout = float(LOAD.query('MEAS:CURR?')) # Выходной ток c нагрузкой
     Noise = float(OSCILLOSCOPE.query(':MEAS:VRMS? CHAN1')) * 1000
     NoisePP = float(OSCILLOSCOPE.query(':MEAS:VPP? CHAN1')) * 1000
-    kpd = ((voltageLOADout * currentLOADout) / (currentLOAD * voltageLOAD)) * 100
+    kpd = ((voltageLOADout * currentLOADout) / inPOWERLOAD) * 100
     LOAD.write(':INP OFF')
-    SUPPLY.write(':OUTP OFF')
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
+    SUPPLYAC.write(':OUTP OFF')
+    # CONTROL_SUPPLYAC.write('OUTP CH3, OFF')
     print('------------------------------------------------------------------------')
     print(f'Напряжение ХХ: {voltageHHout:.3f}')
     print(f'Входной ток ХХ: {currentHH:.3f} A, Входное напряжение ХХ: {voltageHH:.3f} V')
@@ -223,64 +112,28 @@ def run_TEST(INVOLT, OUTCURR, DVolt):
     print(f'КПД: {kpd:.1f} %')
     print(f'Пульсации Vrms: {Noise:.1f} mV')
     print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
-    return[voltageHHout, voltageLOADout, kpd, Noise, NoisePP]
+    return[voltageHHout, voltageLOADout, kpd, Noise, NoisePP, pfHH, pfLOAD]
 
-def run_CURGEN(INVOLT,DVolt):
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
 
-    LOAD.write('SYST:REM')
-    LOAD.write('FUNC RES')
-    LOAD.write('RES MIN')
-    
-    time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    SUPPLY.write(':OUTP ON')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    time.sleep(2)
-    LOAD.write(':INP ON')
-    time.sleep(3)
-
-    voltageCURRENTout = float(MULTIMETR.query(':MEAS:VOLT:DC?')) # Выходное напряжение  c нагрузкой
-    currentCURRENTout = float(LOAD.query('MEAS:CURR?')) # Выходной ток c нагрузкой
-    NoisePP = float(OSCILLOSCOPE.query(':MEAS:VPP? CHAN1')) * 1000
-
-    LOAD.write(':INP OFF')
-    SUPPLY.write(':OUTP OFF')
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
-    print('------------------------------------------------------------------------')
-    print(f'Напряжение под нагрузкой: {voltageCURRENTout:.3f} V, Ток под нагрузкой: {currentCURRENTout:.3f} A')
-    print(f'Пульсации Vp-p: {NoisePP:.1f} mV')
-    return[voltageCURRENTout, currentCURRENTout, NoisePP]
 
 def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
+
 
     LOAD.write('SYST:REM')
     LOAD.write('FUNC CURR')
 
     time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
+    SUPPLYAC.write('SOUR:VOLT ' + str(INVOLT))
     LOAD.write('CURR ' + str(OUTCURR))
-    SUPPLY.write(':OUTP ON')
+    SUPPLYAC.write(':OUTP ON')
     time.sleep(1)
     LOAD.write(':INP ON')
     CONTROL_SUPPLY.write('OUTP CH3, ON')
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
+    CONTROL_SUPPLY.write(f':SOUR3:VOLT 0')
     time.sleep(1)
 
-    for VoltageDis in np.arange(DVolt,0,-0.05):
-        
+    for VoltageDis in np.arange(0,DVolt,+0.05):
+    
         CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
         time.sleep(0.1)
         voltageOUT = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
@@ -289,36 +142,11 @@ def Disable_Volt(INVOLT, OUTCURR, DVolt, nominal_output_voltage):
             break
     CONTROL_SUPPLY.write('OUTP CH3, OFF')
     LOAD.write(':INP OFF')
-    SUPPLY.write(':OUTP OFF')
+    SUPPLYAC.write(':OUTP OFF')
     print("Напряжение отключения [V]" + str(VoltageDis))
     return VoltageDis
 
-def Disable_Volt_NOLOAD(INVOLT, DVolt, nominal_output_voltage):
-    if selection.get() == 'USB0::0x2EC7::0x6700::805033011787020025::INSTR':
-        SUPPLY = rm.open_resource('USB0::0x2EC7::0x6700::805033011787020025::INSTR') # Источник 600В
-        SUPPLY.write('SOUR:CURR 10')
-    elif selection.get() == 'USB0::0xFFFF::0x6500::805037011786920001::INSTR':
-        SUPPLY = rm.open_resource('USB0::0xFFFF::0x6500::805037011786920001::INSTR') # Источник 150В
-        SUPPLY.write('SOUR:CURR 30')
 
-    time.sleep(1)
-    SUPPLY.write('SOUR:VOLT ' + str(INVOLT))
-    SUPPLY.write(':OUTP ON')
-    time.sleep(1)
-    CONTROL_SUPPLY.write(f':SOUR3:VOLT {DVolt}')
-    CONTROL_SUPPLY.write('OUTP CH3, ON')
-    time.sleep(1)
-
-    for VoltageDis in np.arange(DVolt,0,-0.05):
-        CONTROL_SUPPLY.write(f':SOUR3:VOLT {VoltageDis}')
-        time.sleep(0.1)
-        voltageOUT = float(MULTIMETR.query(':MEAS:VOLT:DC?'))
-        print(voltageOUT)
-        if voltageOUT <= nominal_output_voltage*0.99:
-            break
-    CONTROL_SUPPLY.write('OUTP CH3, OFF')
-    SUPPLY.write(':OUTP OFF')
-    return VoltageDis
 
 def run_script():
 
@@ -341,16 +169,16 @@ def run_script():
     disable_volt_max = float(DisVoltMax.get())
     disable_volt_min = float(DisVoltMin.get())
     
-    valueMin = run_TEST(VolInMin, IoutNom, disable_volt)
-    valueNom = run_TEST(VolInNom, IoutNom, disable_volt)
-    valueMax = run_TEST(VolInMax, IoutNom, disable_volt)
+    valueMin = run_TEST(VolInMin, IoutNom)
+    valueNom = run_TEST(VolInNom, IoutNom)
+    valueMax = run_TEST(VolInMax, IoutNom)
 
-    valueHalf = run_TEST(VolInNom, IoutNomH, disable_volt)
+    valueHalf = run_TEST(VolInNom, IoutNomH)
 
-    valueCURGEN = run_CURGEN(VolInNom,disable_volt)
 
+    # DisableVoltage = 2
     DisableVoltage = round(Disable_Volt(VolInNom, IoutNom, disable_volt, nominal_output_voltage),3)
-    # DisableVoltageMax = Disable_Volt(VolInNom, disable_volt, nominal_output_voltage)
+
 
     VoutNoLoadNOM = round(valueNom[0], 3)
     VoutLoadMin = round(valueMin[1], 3)
@@ -385,10 +213,17 @@ def run_script():
     KPDNom = round(valueNom[2],1)
     KPDMax = round(valueMax[2],1)
 
-    VoutCURGEN = round(valueCURGEN[0],3)
-    IoutCURGEN = round(valueCURGEN[1],3)
-    NoiseCURGEN = round(valueCURGEN[2],3)
+    # VoutCURGEN = round(valueCURGEN[0],3)
+    # IoutCURGEN = round(valueCURGEN[1],3)
+    # NoiseCURGEN = round(valueCURGEN[2],3)
 
+    PFHHMin = valueMin[5]
+    PFHHNom = valueNom[5]
+    PFHHMax = valueMax[5]
+        
+    PFLOADMin = valueMin[6]
+    PFLOADNom = valueNom[6]
+    PFLOADMax = valueMax[6]
 
     output_textout1.set(str(VoutLoadNom))
     output_textout2.set(str(LoadReg))
@@ -486,11 +321,14 @@ def run_script():
                         "КПД при Vin" + str(VolInNom)+ " [В];" + 
                         "КПД при Vin" + str(VolInMax)+ " [В];" + 
                         "Напряжение отключения [В];" + 
-                        "Выходное напряжение в режиме генератора тока [В];" + 
-                        "Выходной ток в режиме генератора тока [А];" + 
-                        "Пульсации в режиме генератора тока [мВр-р];" + 
+                        "PF при VinMin(без нагрузки);" + 
+                        "PF при VinNom(без нагрузки);" + 
+                        "PF при VinMax(без нагрузки);" + 
+                        "PF при VinMin(под нагрузкой);" + 
+                        "PF при VinNom(под нагрузкой);" + 
+                        "PF при VinMax(под нагрузкой);" + 
                         "\n")
-        file.write("{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(SerialNum,
+        file.write("{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{}\n".format(SerialNum,
                                                                         VoutNoLoadNOM, 
                                                                         VoutLoadMin, 
                                                                         VoutLoadNom, 
@@ -507,9 +345,13 @@ def run_script():
                                                                         KPDNom, 
                                                                         KPDMax, 
                                                                         DisableVoltage,
-                                                                        VoutCURGEN,
-                                                                        IoutCURGEN,
-                                                                        NoiseCURGEN)) # log the data
+                                                                        PFHHMin,
+                                                                        PFHHNom,
+                                                                        PFHHMax,
+                                                                        PFLOADMin,
+                                                                        PFLOADNom,
+                                                                        PFLOADMax)) 
+    # log the data                                                           
     file.close()
 
     pygame.mixer.music.load('sound.wav')
@@ -517,13 +359,13 @@ def run_script():
 
 w_column = 5
 root = tk.Tk()
-root.title('ПО для проверки DC-DC преобразователей серии "Иртыш"')
+root.title('ПО для проверки DC-DC преобразователей серии "Волга"')
 root.geometry("1920x1080")
 
 
 
 # Описание шапки
-tk.Label(root, text='Проверка DC-DC преобразователей серии "Иртыш"', font="Verdana 24 normal").place(x=460, y=0)
+tk.Label(root, text='Проверка AC-DC преобразователей серии "Волга"', font="Verdana 24 normal").place(x=460, y=0)
 
 tk.Label(root, text='Наименование преобразователя:', font="Verdana 30 normal").place(x=430, y=40)
 NameConverter = tk.Entry(root,font=("Arial", 30))
@@ -563,12 +405,12 @@ suplly_frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
 suplly_frame.place(x=10, y=0)
 
 
-# Настройка выбора источника 
-selection = StringVar(value="USB0::0xFFFF::0x6500::805037011786920001::INSTR")
-radio_button_1 = Radiobutton(suplly_frame, text="Источник 150В", variable=selection, value="USB0::0xFFFF::0x6500::805037011786920001::INSTR", command=chose_dev150,font="Verdana 14 normal")
-radio_button_2 = Radiobutton(suplly_frame, text="Источник 600В", variable=selection, value="USB0::0x2EC7::0x6700::805033011787020025::INSTR", command=chose_dev600,font="Verdana 14 normal")
-radio_button_1.grid(row=0, column=0,  ipadx=6, ipady=7)
-radio_button_2.grid(row=0, column=1,  ipadx=6, ipady=7)
+# # Настройка выбора источника 
+# selection = StringVar(value="USB0::0xFFFF::0x6500::805037011786920001::INSTR")
+# radio_button_1 = Radiobutton(suplly_frame, text="Источник 150В", variable=selection, value="USB0::0xFFFF::0x6500::805037011786920001::INSTR", command=chose_dev150,font="Verdana 14 normal")
+# radio_button_2 = Radiobutton(suplly_frame, text="Источник 600В", variable=selection, value="USB0::0x2EC7::0x6700::805033011787020025::INSTR", command=chose_dev600,font="Verdana 14 normal")
+# radio_button_1.grid(row=0, column=0,  ipadx=6, ipady=7)
+# radio_button_2.grid(row=0, column=1,  ipadx=6, ipady=7)
 
 # Параметры преобразователя
 tk.Label(input_frame, text='Минимальное входное напряжение[В]:', font="Verdana 24 normal").grid(row=0, column=0)
@@ -736,15 +578,6 @@ output_labelNULL3.grid(row=1, column=6)
 
 output_labelNULL3 = tk.Label(output_frame, textvariable=labelNULL3, font="Verdana 14 normal")
 output_labelNULL3.grid(row=2, column=6)
-
-#Новая вставка с постоянным текстом
-#Делаем так, чтобы надписи были всегда
-# output_text1.set('Выходное напряжение [В]: ')
-# output_text2.set('Load regulation [%]: ')
-# output_text3.set('Line regulation [%]: ')
-# output_text4.set('КПД [%]: ')
-# output_text5.set('Пульсации  [мВ p-p]: ')
-# output_text6.set('Напряжение отключения [В]: ')
 
 
 # Start GUI event loop
