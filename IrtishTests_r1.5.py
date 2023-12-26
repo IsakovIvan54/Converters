@@ -19,7 +19,7 @@ print(rm.list_resources())
 OSCILLOSCOPE = rm.open_resource('USB0::0x1AB1::0x0588::DS1ET244602180::INSTR') # Осциллограф 
 CONTROL_SUPPLY = rm.open_resource('USB0::0x1AB1::0x0E11::DP8C244806702::INSTR') # Управляющий источник
 MULTIMETR = rm.open_resource('USB0::0x1AB1::0x0C94::DM3O244701540::INSTR') # Мультиметр
-LOAD = rm.open_resource('ASRL4::INSTR') # Электронная нагрузка
+LOAD = rm.open_resource('ASRL10::INSTR') # Электронная нагрузка
 
 # Настройка мультиметра
 MULTIMETR.write(':SENS:VOLT:DC')
